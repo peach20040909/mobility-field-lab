@@ -7,6 +7,7 @@ import type {
   ProjectExport,
 } from "../domain/schema";
 export interface ResearchRepository {
+  saveAnalysis(photoId: string, input: unknown): Promise<void>;
   registerPhoto(
     input: Omit<Photo, "id">,
     firstKind?: Observation["kind"],

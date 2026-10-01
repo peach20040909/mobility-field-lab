@@ -52,18 +52,44 @@ export default function ReviewPanel({
         </p>
         <div className="review-grid">
           <div>
-            {photo ? (
-              <img
-                className="review-image"
-                src={
-                  photo.dataUrl.startsWith("/")
-                    ? (process.env.NEXT_PUBLIC_BASE_PATH ?? "") + photo.dataUrl
-                    : photo.dataUrl
-                }
-                alt={photo.name}
-              />
-            ) : (
-              <div className="empty">사진 없음</div>
+            <div className="bbox-frame">
+              {photo ? (
+                <img
+                  className="review-image"
+                  src={
+                    photo.dataUrl.startsWith("/")
+                      ? (process.env.NEXT_PUBLIC_BASE_PATH ?? "") +
+                        photo.dataUrl
+                      : photo.dataUrl
+                  }
+                  alt={photo.name}
+                />
+              ) : (
+                <div className="empty">사진 없음</div>
+              )}
+              {photo && observation.bbox && (
+                <span
+                  aria-label="검수 대상 기기 영역"
+                  style={{
+                    position: "absolute",
+                    pointerEvents: "none",
+                    border: "3px solid #268568",
+                    left: observation.bbox[0] * 100 + "%",
+                    top: observation.bbox[1] * 100 + "%",
+                    width:
+                      (observation.bbox[2] - observation.bbox[0]) * 100 + "%",
+                    height:
+                      (observation.bbox[3] - observation.bbox[1]) * 100 + "%",
+                  }}
+                />
+              )}
+            </div>
+            {visible && photo?.analysis && (
+              <p className="small muted">
+                모델: {photo.analysis.modelId} ·{" "}
+                {photo.analysis.modelVersion.slice(0, 12)} ·{" "}
+                {photo.analysis.timestamp} · {photo.analysis.seconds}초
+              </p>
             )}
             <p className="small muted">
               사진에서 폭을 미터로 추정하지 않습니다. 애매하면 판정 불가로

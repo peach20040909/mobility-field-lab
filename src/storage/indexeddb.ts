@@ -14,6 +14,7 @@ import {
 } from "../domain/schema";
 import { demoProject } from "../data/demo";
 import { imagePayload, decodePhoto } from "../domain/photo";
+import { analysisSchema } from "../ai/provider";
 import type { ResearchRepository } from "./repository";
 class Database extends Dexie {
   sessions!: Table<Session>;
@@ -37,6 +38,50 @@ export class LocalRepository implements ResearchRepository {
     private decoder: (url: string) => Promise<void> = decodePhoto,
   ) {
     this.db = new Database(name);
+  }
+  async saveAnalysis(photoId: string, input: unknown) {
+    const clean = analysisSchema.parse(input);
+    await this.db.transaction(
+      "rw",
+      [
+        this.db.photos,
+        this.db.observations,
+        this.db.segments,
+        this.db.sessions,
+      ],
+      async () => {
+        const photo = await this.db.photos.get(photoId);
+        if (
+          !photo ||
+          photo.analysis ||
+          (await this.db.observations.where("photoId").equals(photoId).count())
+        )
+          throw new Error(
+            "이미 기록된 사진에는 AI 판정을 다시 추가할 수 없습니다",
+          );
+        const segment = await this.db.segments.get(photo.segmentId);
+        const session =
+          segment && (await this.db.sessions.get(segment.sessionId));
+        if (session?.source !== "field")
+          throw new Error("실제 사진만 분석할 수 있습니다");
+        const { observations, ...metadata } = clean;
+        await this.db.photos.update(photoId, { analysis: metadata });
+        for (const item of observations) {
+          const id = crypto.randomUUID();
+          const { bbox, ...judgment } = item;
+          await this.db.observations.add({
+            id,
+            photoId,
+            segmentId: photo.segmentId,
+            canonicalDeviceId: id,
+            kind: "unknown",
+            bbox,
+            judgments: { AI: judgment },
+            history: [{ at: clean.timestamp, action: "AI", judgment }],
+          });
+        }
+      },
+    );
   }
   async createSession(input: SessionInput) {
     const clean = sessionInputSchema.parse(input);

@@ -22,10 +22,15 @@ export function toCsv(p: ProjectExport) {
     "B_status",
     "AI_status",
     "reason",
+    "AI_reason",
+    "model_id",
+    "model_version",
+    "bbox",
   ];
   const rows = p.observations.map((o) => {
     const segment = p.segments.find((s) => s.id === o.segmentId);
     const session = p.sessions.find((s) => s.id === segment?.sessionId);
+    const photo = p.photos.find((s) => s.id === o.photoId);
     return [
       session?.source,
       session?.city,
@@ -43,6 +48,10 @@ export function toCsv(p: ProjectExport) {
       o.judgments.B?.status,
       o.judgments.AI?.status,
       o.final?.reason,
+      o.judgments.AI?.reason,
+      photo?.analysis?.modelId,
+      photo?.analysis?.modelVersion,
+      o.bbox?.join("|"),
     ]
       .map(cell)
       .join(",");
@@ -68,6 +77,10 @@ export function toCsv(p: ProjectExport) {
         "",
         "",
         "기록된 기기 0대",
+        "",
+        "",
+        "",
+        "",
       ]
         .map(cell)
         .join(","),

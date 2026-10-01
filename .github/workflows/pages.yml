@@ -10,6 +10,15 @@ concurrency:
   group: pages-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  vision-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install fastapi==0.124.0 pydantic==2.12.5 pillow==12.3.0 pytest==9.0.1 httpx==0.28.1 python-multipart==0.0.20
+      - run: python -m pytest services/vision/test_contract.py services/vision/test_api.py -q
   build:
     runs-on: ubuntu-latest
     steps:
@@ -33,7 +42,7 @@ jobs:
           path: out
   deploy:
     if: github.ref == 'refs/heads/main'
-    needs: build
+    needs: [build, vision-contract]
     runs-on: ubuntu-latest
     permissions:
       pages: write

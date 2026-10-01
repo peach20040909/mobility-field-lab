@@ -27,6 +27,7 @@ import { LocalRepository } from "@/storage/indexeddb";
 import { computeMetrics } from "@/domain/metrics";
 import { computeAgreement } from "@/domain/agreement";
 import { toCsv } from "@/domain/export";
+import { analyzePhoto, LOCAL_VISION_URL } from "@/ai/provider";
 import { cities } from "@/data/cities";
 import {
   kindLabels,
@@ -80,6 +81,8 @@ export default function FieldLab() {
   const [error, setError] = useState("");
   const [menu, setMenu] = useState(false);
   const [uploadSession, setUploadSession] = useState("");
+  const [visionToken, setVisionToken] = useState("");
+  const [visionReady, setVisionReady] = useState(false);
   const [kind, setKind] = useState<Observation["kind"] | "none">("none");
   const [busy, setBusy] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
@@ -737,10 +740,52 @@ export default function FieldLab() {
                   ))}
                 </select>
               </div>
-              <p className="notice">
-                AI 미연결 · 자동 분석 결과는 없습니다. 예시 데이터의 AI 판정도
-                합성값입니다. 한 사진에 여러 기기가 있으면 기기를 추가하세요.
-              </p>
+              <div className="panel">
+                <h3>이 PC의 AI 서버</h3>
+                <p className="small muted">
+                  사진은 이 PC의 로컬 서버로 전달됩니다. 서버를 실행하고 연결
+                  토큰을 입력하세요. 토큰은 현재 화면에서만 보관합니다.
+                </p>
+                <div className="button-group">
+                  <input
+                    aria-label="로컬 AI 연결 토큰"
+                    type="password"
+                    value={visionToken}
+                    onChange={(e) => {
+                      setVisionToken(e.target.value);
+                      setVisionReady(false);
+                    }}
+                    placeholder="연결 토큰"
+                    autoComplete="off"
+                  />
+                  <button
+                    className="secondary"
+                    disabled={!visionToken || busy}
+                    onClick={() =>
+                      void action(async () => {
+                        setVisionReady(false);
+                        const res = await fetch(LOCAL_VISION_URL + "/connect", {
+                          headers: { Authorization: "Bearer " + visionToken },
+                          signal: AbortSignal.timeout(5000),
+                        });
+                        if (!res.ok || !(await res.json()).ready)
+                          throw new Error(
+                            "AI 서버가 준비되지 않았습니다. 수동 검수는 계속할 수 있습니다.",
+                          );
+                        setVisionReady(true);
+                      }, "로컬 AI 서버가 준비되었습니다")
+                    }
+                  >
+                    AI 연결 확인
+                  </button>
+                </div>
+                <p className="notice">
+                  {visionReady
+                    ? "로컬 AI 연결됨 · 기기 기록이 없는 실제 사진에서 분석할 수 있습니다."
+                    : "AI 미연결 · 수동 판정 가능"}{" "}
+                  예시의 AI 판정은 합성값입니다.
+                </p>
+              </div>
               {data.photos
                 .filter(
                   (p) =>
@@ -763,6 +808,31 @@ export default function FieldLab() {
                       <p className="small muted">
                         사진만 등록됨 · 기록된 기기 0대
                       </p>
+                      {photo.analysis && (
+                        <p className="small muted">
+                          AI 분석 완료 · 검출 0대 · {photo.analysis.modelId}
+                        </p>
+                      )}
+                      {!photo.analysis && (
+                        <button
+                          className="secondary"
+                          disabled={!visionReady || busy || source !== "field"}
+                          onClick={() =>
+                            void action(async () => {
+                              const blob = await (
+                                await fetch(photo.dataUrl)
+                              ).blob();
+                              const result = await analyzePhoto(
+                                blob,
+                                visionToken,
+                              );
+                              await repo.saveAnalysis(photo.id, result);
+                            }, "AI 분석을 저장했습니다. 독립 검수를 진행하세요.")
+                          }
+                        >
+                          AI로 기기 분석
+                        </button>
+                      )}
                       <button
                         className="secondary"
                         onClick={() =>
@@ -888,7 +958,9 @@ export default function FieldLab() {
                     );
                   })}
                 </div>
-              ) : (
+              ) : data.photos.some((p) =>
+                  segments.some((s) => s.id === p.segmentId),
+                ) ? null : (
                 <Empty
                   icon={ScanLine}
                   title="검수할 사진이 없습니다."
@@ -1070,7 +1142,7 @@ export default function FieldLab() {
                   <p className="small muted">
                     {source === "demo"
                       ? "합성 판정값입니다. 모델 정확도를 의미하지 않습니다."
-                      : "실제 AI 미연결 · 검증 표본이 수집되면 계산됩니다."}
+                      : "AI와 확정 판정의 비교 쌍이 없습니다. 검수 표본이 수집되면 계산됩니다."}
                   </p>
                   <div className="criteria">
                     <strong>함께 읽어야 할 것</strong>
@@ -1167,7 +1239,7 @@ export default function FieldLab() {
                 {
                   title: "06 · 지금의 구현 상태",
                   content:
-                    "로컬 조사 등록·사진 저장·수동 판정·역할별 검수·지표·지도·백업·CSV가 구현되어 있습니다. 실제 공개 모델 추론, 팀 계정 공동 저장, 자동 가림 처리, 견인 원자료 분석은 미연결입니다. 원본 사진은 이 브라우저에만 남고 공개 서버로 전송하지 않습니다.",
+                    "조사 등록·사진 저장·판정·역할별 검수·지표·지도·백업·CSV가 구현되어 있습니다. 공개 모델은 이 PC의 로컬 AI 서버로 연결하며 실험 단계입니다. 팀 계정 공동 저장, 자동 가림 처리, 견인 원자료 분석은 미연결입니다. 사진은 이 브라우저와 사용자가 실행한 로컬 AI 서버에서 처리합니다.",
                 },
                 {
                   title: "07 · 결과 해석과 공개",

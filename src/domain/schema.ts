@@ -58,6 +58,19 @@ export const segmentSchema = z.object({
   ...coordinates,
 });
 export type Segment = z.infer<typeof segmentSchema>;
+export const bboxSchema = z
+  .tuple([z.number(), z.number(), z.number(), z.number()])
+  .refine(
+    ([a, b, c, d]) => a >= 0 && b >= 0 && a < c && b < d && c <= 1 && d <= 1,
+    "Invalid normalized bbox",
+  );
+export const analysisMetadataSchema = z.object({
+  modelId: z.string().min(1),
+  modelVersion: z.string().min(1),
+  timestamp: z.string().datetime({ offset: true }),
+  seconds: z.number().nonnegative().max(60),
+  warnings: z.array(z.string()),
+});
 export const photoSchema = z.object({
   id: z.string(),
   segmentId: z.string(),
@@ -65,6 +78,7 @@ export const photoSchema = z.object({
   dataUrl: z.string().max(15000000),
   redacted: z.boolean(),
   publicationReviewed: z.boolean(),
+  analysis: analysisMetadataSchema.optional(),
 });
 export type Photo = z.infer<typeof photoSchema>;
 export const observationSchema = z.object({
@@ -73,6 +87,7 @@ export const observationSchema = z.object({
   segmentId: z.string(),
   canonicalDeviceId: z.string(),
   kind: kindSchema,
+  bbox: bboxSchema.optional(),
   judgments: z.object({
     A: judgmentSchema.optional(),
     B: judgmentSchema.optional(),

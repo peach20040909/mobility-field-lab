@@ -16,3 +16,7 @@ test-results/
 playwright-report/
 *.tsbuildinfo
 .superpowers/
+.venv/
+__pycache__/
+.pytest_cache/
+services/vision/results/

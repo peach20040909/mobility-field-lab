@@ -1081,6 +1081,17 @@ textarea {
   object-fit: contain;
   background: #f6f7ef;
 }
+.bbox-frame {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+}
+.bbox-frame .review-image {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+}
 .review-grid .small {
   margin: 12px 0;
 }
