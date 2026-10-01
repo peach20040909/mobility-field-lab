@@ -1,0 +1,11 @@
+# Local source documents and research extracts
+research/
+*.pdf
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+.next/
+coverage/
+*.log
