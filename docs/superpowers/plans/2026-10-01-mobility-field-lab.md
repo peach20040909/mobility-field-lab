@@ -130,7 +130,7 @@ AI 후보는 Qwen 공개 비전 모델이며 구체적 모델은 GPU 메모리�
 - [ ] E2E `demo_full_flow` 작성: 예시 선택 → 조사 등록 → 기기 판정 → A/B 검수 → 확정 → 지표·지도 → CSV. 실제/예시를 혼합하지 않는지 확인.
 - [ ] 3분 시연 안내에 연구 질문, 방법, 검증, 결과 활용, 아직 미완료인 연결을 포함. 실제 성능과 정책 효과를 과장하지 않는다.
 - [ ] `npm.cmd run test`, `npm.cmd run lint`, `npm.cmd run typecheck`, `npm.cmd run build`, `npm.cmd run test:e2e` 실행. 390px와 1440px 화면 및 키보드 조작 확인.
-- [ ] GitHub 로그인 후 비공개 `mobility-field-lab` 저장소 생성, origin 연결 및 push. 원문 PDF·research·환경 비밀값 제외 확인.
+- [ ] GitHub 로그인 후 공개 `mobility-field-lab` 저장소 생성, origin 연결 및 push (사용자 공개 허용). 원문 PDF·research·환경 비밀값 제외 확인.
 - [ ] 연결된 호스팅 계정으로 시연 배포, 서버 공동 조사 자원이 준비되면 해당 환경 배포. 사용자가 고르지 않은 유료 플랜은 구매하지 않는다.
 - [ ] 배포 URL에서 새 브라우저 세션으로 시연과 저장을 재확인하고 실제 AI 연결 여부를 기록.
 - [ ] `docs: document verified deployment and interview demo` 커밋. 결과를 URL, 검증 내용, 남은 실제 자료/AI 연결 조건과 함께 보고.
