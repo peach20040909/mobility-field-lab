@@ -80,7 +80,7 @@ export default function FieldLab() {
   const [error, setError] = useState("");
   const [menu, setMenu] = useState(false);
   const [uploadSession, setUploadSession] = useState("");
-  const [kind, setKind] = useState<Observation["kind"]>("shared-scooter");
+  const [kind, setKind] = useState<Observation["kind"] | "none">("none");
   const [busy, setBusy] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
   const refresh = async () => {
@@ -119,10 +119,14 @@ export default function FieldLab() {
   );
   const metrics = computeMetrics(segments, observations);
   const agreement = computeAgreement(
-    observations.map((o) => ({ left: o.judgments.A, right: o.judgments.B })),
+    observations
+      .filter((o) => o.id === o.canonicalDeviceId)
+      .map((o) => ({ left: o.judgments.A, right: o.judgments.B })),
   );
   const aiAgreement = computeAgreement(
-    observations.map((o) => ({ left: o.judgments.AI, right: o.final })),
+    observations
+      .filter((o) => o.id === o.canonicalDeviceId)
+      .map((o) => ({ left: o.judgments.AI, right: o.final })),
   );
   const go = (p: Page) => {
     setPage(p);
@@ -573,8 +577,6 @@ export default function FieldLab() {
                       const f = e.target.files?.[0];
                       if (f)
                         void action(async () => {
-                          if (f.size > 50 * 1024 * 1024)
-                            throw new Error("백업은 50MB 이하여야 합니다");
                           await repo.importProject(JSON.parse(await f.text()));
                         }, "백업을 가져왔습니다");
                       e.target.value = "";
@@ -704,16 +706,18 @@ export default function FieldLab() {
                           );
                           if (!segment)
                             throw new Error("조사 구간을 찾지 못했습니다");
-                          const photo = await repo.savePhoto({
-                            segmentId: segment.id,
-                            name: file.name,
-                            dataUrl,
-                            redacted: false,
-                            publicationReviewed: false,
-                          });
-                          await repo.addObservation(photo.id, kind);
+                          await repo.registerPhoto(
+                            {
+                              segmentId: segment.id,
+                              name: file.name,
+                              dataUrl,
+                              redacted: false,
+                              publicationReviewed: false,
+                            },
+                            kind === "none" ? undefined : kind,
+                          );
                           setSource("field");
-                        }, "사진과 첫 기기를 등록했습니다");
+                        }, "사진을 등록했습니다");
                       e.target.value = "";
                     }}
                   />
@@ -722,9 +726,10 @@ export default function FieldLab() {
                   aria-label="첫 기기 구분"
                   value={kind}
                   onChange={(e) =>
-                    setKind(e.target.value as Observation["kind"])
+                    setKind(e.target.value as Observation["kind"] | "none")
                   }
                 >
+                  <option value="none">기기 없음 · 사진만 등록</option>
                   {Object.entries(kindLabels).map(([k, v]) => (
                     <option key={k} value={k}>
                       {v}
@@ -736,6 +741,44 @@ export default function FieldLab() {
                 AI 미연결 · 자동 분석 결과는 없습니다. 예시 데이터의 AI 판정도
                 합성값입니다. 한 사진에 여러 기기가 있으면 기기를 추가하세요.
               </p>
+              {data.photos
+                .filter(
+                  (p) =>
+                    segments.some((s) => s.id === p.segmentId) &&
+                    !observations.some((o) => o.photoId === p.id),
+                )
+                .map((photo) => (
+                  <article className="panel observation-card" key={photo.id}>
+                    <img
+                      src={
+                        photo.dataUrl.startsWith("/")
+                          ? (process.env.NEXT_PUBLIC_BASE_PATH ?? "") +
+                            photo.dataUrl
+                          : photo.dataUrl
+                      }
+                      alt={photo.name}
+                    />
+                    <div className="observation-body">
+                      <h3>{photo.name}</h3>
+                      <p className="small muted">
+                        사진만 등록됨 · 기록된 기기 0대
+                      </p>
+                      <button
+                        className="secondary"
+                        onClick={() =>
+                          void action(async () => {
+                            await repo.addObservation(
+                              photo.id,
+                              kind === "none" ? "unknown" : kind,
+                            );
+                          }, "사진에 기기를 추가했습니다")
+                        }
+                      >
+                        기기 추가
+                      </button>
+                    </div>
+                  </article>
+                ))}
               {observations.length ? (
                 <div className="observation-grid">
                   {observations.map((o, i) => {
@@ -777,7 +820,7 @@ export default function FieldLab() {
                           <div className="button-group">
                             <button
                               className="secondary"
-                              onClick={() => setReviewId(o.id)}
+                              onClick={() => setReviewId(o.canonicalDeviceId)}
                             >
                               검수하기
                               <ArrowUpRight size={14} />
@@ -786,7 +829,10 @@ export default function FieldLab() {
                               className="text-button small"
                               onClick={() =>
                                 void action(async () => {
-                                  await repo.addObservation(o.photoId, kind);
+                                  await repo.addObservation(
+                                    o.photoId,
+                                    kind === "none" ? "unknown" : kind,
+                                  );
                                 }, "같은 사진에 기기를 추가했습니다")
                               }
                             >
@@ -802,12 +848,16 @@ export default function FieldLab() {
                                   : o.canonicalDeviceId
                               }
                               onChange={(e) => {
-                                if (e.target.value)
-                                  void action(
-                                    () =>
-                                      repo.linkDuplicate(o.id, e.target.value),
-                                    "중복 기기를 연결했습니다",
-                                  );
+                                const target = e.target.value;
+                                void action(
+                                  () =>
+                                    target
+                                      ? repo.linkDuplicate(o.id, target)
+                                      : repo.unlinkDuplicate(o.id),
+                                  target
+                                    ? "중복 기기를 연결했습니다"
+                                    : "별도 기기로 변경했습니다",
+                                );
                               }}
                             >
                               <option value="">별도 기기</option>

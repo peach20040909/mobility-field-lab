@@ -9,7 +9,11 @@ export default function ResearchMap({ sessions }: { sessions: Session[] }) {
     let map: import("leaflet").Map | undefined;
     void import("leaflet").then((L) => {
       if (cancelled || !ref.current) return;
-      map = L.map(ref.current).setView([47, 8], 4);
+      map = L.map(ref.current, {
+        zoomAnimation: false,
+        fadeAnimation: false,
+        markerZoomAnimation: false,
+      }).setView([47, 8], 4);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "© OpenStreetMap contributors",
         maxZoom: 19,
@@ -39,10 +43,12 @@ export default function ResearchMap({ sessions }: { sessions: Session[] }) {
         map.fitBounds(L.latLngBounds(points), {
           padding: [35, 35],
           maxZoom: 14,
+          animate: false,
         });
     });
     return () => {
       cancelled = true;
+      map?.stop();
       map?.remove();
     };
   }, [sessions]);

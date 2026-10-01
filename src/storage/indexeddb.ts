@@ -13,6 +13,7 @@ import {
   type ProjectExport,
 } from "../domain/schema";
 import { demoProject } from "../data/demo";
+import { imagePayload, decodePhoto } from "../domain/photo";
 import type { ResearchRepository } from "./repository";
 class Database extends Dexie {
   sessions!: Table<Session>;
@@ -31,7 +32,10 @@ class Database extends Dexie {
 }
 export class LocalRepository implements ResearchRepository {
   private db: Database;
-  constructor(name = "mobility-field-lab-v1") {
+  constructor(
+    name = "mobility-field-lab-v1",
+    private decoder: (url: string) => Promise<void> = decodePhoto,
+  ) {
     this.db = new Database(name);
   }
   async createSession(input: SessionInput) {
@@ -85,16 +89,36 @@ export class LocalRepository implements ResearchRepository {
     for (const s of p.segments)
       if (!p.sessions.some((x) => x.id === s.sessionId))
         throw new Error("잘못된 구간 참조");
-    for (const photo of p.photos)
-      if (!p.segments.some((s) => s.id === photo.segmentId))
-        throw new Error("잘못된 사진 참조");
+    const validatedImages = new Set<string>();
+    for (const photo of p.photos) {
+      const segment = p.segments.find((s) => s.id === photo.segmentId);
+      if (!segment) throw new Error("잘못된 사진 참조");
+      const source = p.sessions.find((s) => s.id === segment.sessionId)!.source;
+      if (photo.dataUrl === "/demo-street.svg" && source === "demo") continue;
+      imagePayload(photo.dataUrl);
+      if (!validatedImages.has(photo.dataUrl)) {
+        await this.decoder(photo.dataUrl);
+        validatedImages.add(photo.dataUrl);
+      }
+    }
     for (const o of p.observations) {
       if (
         !p.photos.some((x) => x.id === o.photoId && x.segmentId === o.segmentId)
       )
         throw new Error("잘못된 관찰 참조");
-      if (!p.observations.some((x) => x.id === o.canonicalDeviceId))
-        throw new Error("잘못된 중복 참조");
+      const target = p.observations.find((x) => x.id === o.canonicalDeviceId);
+      if (!target) throw new Error("잘못된 중복 참조");
+      const ownSession = p.segments.find(
+        (s) => s.id === o.segmentId,
+      )!.sessionId;
+      const targetSession = p.segments.find(
+        (s) => s.id === target.segmentId,
+      )!.sessionId;
+      if (
+        target.canonicalDeviceId !== target.id ||
+        ownSession !== targetSession
+      )
+        throw new Error("같은 조사 안의 대표 기기만 연결할 수 있습니다");
     }
     await this.db.transaction(
       "rw",
@@ -103,6 +127,28 @@ export class LocalRepository implements ResearchRepository {
       this.db.photos,
       this.db.observations,
       async () => {
+        const stable = (value: unknown): string =>
+          JSON.stringify(value, (_key, val) =>
+            val && typeof val === "object" && !Array.isArray(val)
+              ? Object.keys(val)
+                  .sort()
+                  .reduce((out, key) => ({ ...out, [key]: val[key] }), {})
+              : val,
+          );
+        for (const [table, rows] of [
+          [this.db.sessions, p.sessions],
+          [this.db.segments, p.segments],
+          [this.db.photos, p.photos],
+          [this.db.observations, p.observations],
+        ] as const) {
+          for (const row of rows) {
+            const existing = await table.get(row.id);
+            if (existing && stable(existing) !== stable(row))
+              throw new Error(
+                "기존 기록과 충돌하는 백업입니다. 최신 판정을 보호하기 위해 가져오지 않았습니다. 빈 브라우저에서 복원해 비교하세요.",
+              );
+          }
+        }
         await this.db.sessions.bulkPut(p.sessions);
         await this.db.segments.bulkPut(p.segments);
         await this.db.photos.bulkPut(p.photos);
@@ -121,10 +167,39 @@ export class LocalRepository implements ResearchRepository {
     const photo = photoSchema.parse({ ...input, id: crypto.randomUUID() });
     if (!(await this.db.segments.get(photo.segmentId)))
       throw new Error("구간을 찾지 못했습니다");
-    if (!/^data:image\/(jpeg|png|webp);base64,/.test(photo.dataUrl))
-      throw new Error("지원하지 않는 사진 형식");
+    imagePayload(photo.dataUrl);
+    await this.decoder(photo.dataUrl);
     await this.db.photos.add(photo);
     return photo;
+  }
+  async registerPhoto(
+    input: Omit<Photo, "id">,
+    firstKind?: Observation["kind"],
+  ) {
+    const photo = photoSchema.parse({ ...input, id: crypto.randomUUID() });
+    imagePayload(photo.dataUrl);
+    await this.decoder(photo.dataUrl);
+    return this.db.transaction(
+      "rw",
+      this.db.photos,
+      this.db.observations,
+      this.db.segments,
+      async () => {
+        if (!(await this.db.segments.get(photo.segmentId)))
+          throw new Error("구간을 찾지 못했습니다");
+        await this.db.photos.add(photo);
+        const observation = firstKind
+          ? await this.addObservation(photo.id, firstKind)
+          : undefined;
+        return { photo, observation };
+      },
+    );
+  }
+  async unlinkDuplicate(id: string) {
+    await this.db.transaction("rw", this.db.observations, async () => {
+      const o = await this.observation(id);
+      await this.db.observations.put({ ...o, canonicalDeviceId: o.id });
+    });
   }
   async addObservation(photoId: string, kind: Observation["kind"]) {
     const photo = await this.db.photos.get(photoId);

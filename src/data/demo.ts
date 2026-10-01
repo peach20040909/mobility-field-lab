@@ -1,23 +1,21 @@
 import type { ProjectExport, Judgment } from "../domain/schema";
 import { cities } from "./cities";
 export function demoProject(): ProjectExport {
-  const sessions = cities
-    .slice(0, 5)
-    .map((c) => ({
-      id: "demo-" + c.id,
-      city: c.id,
-      place: c.place,
-      date: "2026-10-01",
-      time: "13:00",
-      timezone: c.id === "seoul" ? "Asia/Seoul" : "Europe/Paris",
-      weather: "맑음",
-      source: "demo" as const,
-      lengthM: 400,
-      relation: "single" as const,
-      latitude: c.lat,
-      longitude: c.lng,
-      createdAt: "2026-10-01T00:00:00Z",
-    }));
+  const sessions = cities.slice(0, 5).map((c) => ({
+    id: "demo-" + c.id,
+    city: c.id,
+    place: c.place,
+    date: "2026-10-01",
+    time: "13:00",
+    timezone: c.id === "seoul" ? "Asia/Seoul" : "Europe/Paris",
+    weather: "맑음",
+    source: "demo" as const,
+    lengthM: 400,
+    relation: "single" as const,
+    latitude: c.lat,
+    longitude: c.lng,
+    createdAt: "2026-10-01T00:00:00Z",
+  }));
   const segments = sessions.map((s) => ({
     id: s.id + "-segment",
     sessionId: s.id,

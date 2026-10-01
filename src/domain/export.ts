@@ -47,5 +47,31 @@ export function toCsv(p: ProjectExport) {
       .map(cell)
       .join(",");
   });
+  for (const segment of p.segments) {
+    if (p.observations.some((o) => o.segmentId === segment.id)) continue;
+    const session = p.sessions.find((s) => s.id === segment.sessionId);
+    rows.push(
+      [
+        session?.source,
+        session?.city,
+        session?.place,
+        session?.date,
+        segment.id,
+        segment.lengthM,
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "기록된 기기 0대",
+      ]
+        .map(cell)
+        .join(","),
+    );
+  }
   return "\uFEFF" + [header.join(","), ...rows].join("\r\n");
 }

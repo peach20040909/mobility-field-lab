@@ -7,6 +7,11 @@ import type {
   ProjectExport,
 } from "../domain/schema";
 export interface ResearchRepository {
+  registerPhoto(
+    input: Omit<Photo, "id">,
+    firstKind?: Observation["kind"],
+  ): Promise<{ photo: Photo; observation?: Observation }>;
+  unlinkDuplicate(id: string): Promise<void>;
   createSession(input: SessionInput): Promise<Session>;
   exportProject(): Promise<ProjectExport>;
   importProject(input: unknown): Promise<void>;

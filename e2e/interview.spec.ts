@@ -44,6 +44,34 @@ test("demo_full_flow preserves independent judgments and separates real records"
   await page.getByRole("button", { name: "실제 기록", exact: true }).click();
   await expect(page.getByText("실제 조사 테스트")).toBeVisible();
   await expect(page.getByText("뢰머광장 → 차일 거리")).not.toBeVisible();
+  await page
+    .getByRole("button", { name: "사진 판정 · 검수", exact: true })
+    .click();
+  const png = await page.evaluate(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 20;
+    canvas.height = 20;
+    canvas.getContext("2d")!.fillRect(0, 0, 20, 20);
+    return canvas.toDataURL("image/png").split(",")[1];
+  });
+  await page
+    .getByLabel("사진을 등록할 조사")
+    .selectOption({ label: "실제 조사 테스트" });
+  await page
+    .locator('input[type="file"][accept="image/jpeg,image/png,image/webp"]')
+    .setInputFiles({
+      name: "empty-scene.png",
+      mimeType: "image/png",
+      buffer: Buffer.from(png, "base64"),
+    });
+  await expect(page.getByText("사진만 등록됨 · 기록된 기기 0대")).toBeVisible();
+  await page.reload();
+  await page
+    .getByRole("button", { name: "사진 판정 · 검수", exact: true })
+    .click();
+  await expect(page.getByText("사진만 등록됨 · 기록된 기기 0대")).toBeVisible();
+  await page.getByRole("button", { name: "기기 추가", exact: true }).click();
+  await expect(page.getByRole("button", { name: "검수하기" })).toHaveCount(1);
 });
 test("mobile navigation is operable", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });

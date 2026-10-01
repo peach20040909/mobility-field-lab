@@ -6,7 +6,19 @@
 
 ## 현재 상태
 
-자료 분석 및 초기 설계 완료. 제품 구현과 배포는 아직 진행 전입니다.
+1차 면접 시연용 웹앱을 구현했습니다. 조사 등록, 사진 저장, A/B 독립 판정과 최종 조정, 중복 기기 연결·해제, 지표·지도, JSON 백업 및 CSV 내보내기를 제공합니다.
+
+데이터는 현재 브라우저의 IndexedDB에 저장됩니다. 합성 예시와 실제 조사 기록을 분리합니다. AI 추론, 계정 기반 팀 동기화, 견인 원자료 연결은 후속 구현 항목입니다.
+
+[웹앱](https://peach20040909.github.io/mobility-field-lab/)
+
+## 실행 및 검증
+
+Node.js 24 환경에서 `npm ci`, `npm run dev`로 실행합니다.
+
+`npm test`, `npm run lint`, `npm run typecheck`, `npm run test:e2e`로 검증합니다. 브라우저 테스트 최초 실행 전 `npx playwright install chromium`이 필요합니다.
+
+main에 반영하면 GitHub Actions에서 검증 후 GitHub Pages에 정적 배포합니다.
 
 ## 설계
 

@@ -10,8 +10,7 @@ export function computeMetrics(
   for (const o of observations) {
     if (!scope.has(o.segmentId)) continue;
     const key = scope.get(o.segmentId) + "/" + o.canonicalDeviceId;
-    const prior = unique.get(key);
-    if (!prior || (!prior.final && o.final)) unique.set(key, o);
+    if (o.id === o.canonicalDeviceId) unique.set(key, o);
   }
   const rows = [...unique.values()].filter((o) =>
     ["shared-scooter", "shared-ebike"].includes(o.final?.kind ?? o.kind),

@@ -69,7 +69,7 @@ describe("research metrics", () => {
     expect(
       computeMetrics([segment, b], [
         device("1"),
-        { ...device("2"), segmentId: "b", canonicalDeviceId: "1" },
+        { ...device("2"), segmentId: "b", canonicalDeviceId: "2" },
       ] as never).total,
     ).toBe(2);
   });
