@@ -12,6 +12,8 @@ main push 시 GitHub Actions가 테스트·타입 검사·모바일/시연 E2E�
 
 사이트: https://peach20040909.github.io/mobility-field-lab/
 
+2026-10-01 GitHub Actions의 웹앱 검증·Python AI 계약 검증·Pages 배포 성공을 확인했다. 배포 URL의 데스크톱·모바일 화면과 실제 로컬 AI 연결 흐름도 별도 브라우저에서 확인했다. AI 연결은 로컬 접근 허용 여부에 따라 달라지며, 허용하지 않으면 로컬 웹앱을 사용할 수 있다.
+
 공식 배포 동작: https://github.com/actions/deploy-pages
 
 ## 저장 경계

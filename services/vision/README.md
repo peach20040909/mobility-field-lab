@@ -19,7 +19,7 @@ services/vision/.venv/Scripts/python.exe services/vision/serve.py
 
 서버는 127.0.0.1:8765에서만 수신한다. 자동 생성된 services/vision/.env 파일의 토큰을 사진 검수 화면에 입력한다. 토큰 파일과 모델 시험 결과는 Git에서 제외된다. 현재 화면의 토큰은 영구 브라우저 저장소에 저장하지 않는다.
 
-GitHub Pages에서 로컬 주소 접근을 브라우저가 허용하지 않으면 로컬 웹앱에서 시험한다. 공유 서버나 팀 인증의 대체 기능은 아니다.
+GitHub Pages에서 로컬 주소 접근을 브라우저가 허용하지 않으면 로컬 웹앱에서 시험한다. Chrome의 [Local Network Access 안내](https://developer.chrome.com/blog/local-network-access)를 따른다. 보안 기능을 끄지 않는다. 공유 서버나 팀 인증의 대체 기능은 아니다.
 
 ## 검증
 

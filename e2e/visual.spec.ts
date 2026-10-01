@@ -5,7 +5,7 @@ test("desktop and mobile pages fit and render without errors", async ({
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.goto("/");
+  await page.goto("./");
   await expect(
     page.getByRole("heading", { name: "도시의 선택을, 거리의 기록으로." }),
   ).toBeVisible();

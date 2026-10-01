@@ -767,6 +767,10 @@ export default function FieldLab() {
                         const res = await fetch(LOCAL_VISION_URL + "/connect", {
                           headers: { Authorization: "Bearer " + visionToken },
                           signal: AbortSignal.timeout(5000),
+                        }).catch(() => {
+                          throw new Error(
+                            "로컬 AI 서버에 연결할 수 없습니다. 서버 실행과 브라우저의 로컬 접근 허용을 확인하거나 로컬 화면을 이용하세요.",
+                          );
                         });
                         if (!res.ok || !(await res.json()).ready)
                           throw new Error(
@@ -784,6 +788,17 @@ export default function FieldLab() {
                     ? "로컬 AI 연결됨 · 기기 기록이 없는 실제 사진에서 분석할 수 있습니다."
                     : "AI 미연결 · 수동 판정 가능"}{" "}
                   예시의 AI 판정은 합성값입니다.
+                </p>
+                <p className="small muted">
+                  공개 사이트에서 연결할 때 브라우저의 로컬 접근 허용이 필요할
+                  수 있습니다.{" "}
+                  <a
+                    href="http://127.0.0.1:3000"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    로컬 화면 열기
+                  </a>
                 </p>
               </div>
               {data.photos

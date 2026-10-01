@@ -2,13 +2,18 @@ import { test, expect } from "@playwright/test";
 import { readFileSync } from "node:fs";
 test("real local model photo upload to saved independent review", async ({
   page,
+  context,
 }) => {
   test.skip(
     !process.env.FIELD_PHOTO,
     "Requires user-supplied local photo and running GPU server",
   );
   test.setTimeout(100000);
-  await page.goto("/");
+  if (process.env.PLAYWRIGHT_BASE_URL?.startsWith("https:"))
+    await context.grantPermissions(["local-network-access"], {
+      origin: new URL(process.env.PLAYWRIGHT_BASE_URL).origin,
+    });
+  await page.goto("./");
   await page.getByRole("button", { name: "새 조사 시작" }).click();
   await page.getByLabel("장소 이름").fill("로컬 AI 연결 검증 · 측정 결과 아님");
   await page.getByRole("button", { name: "조사 저장" }).click();

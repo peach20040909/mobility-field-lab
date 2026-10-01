@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 test("demo_full_flow preserves independent judgments and separates real records", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("./");
   await expect(
     page.getByRole("heading", { name: "도시의 선택을, 거리의 기록으로." }),
   ).toBeVisible();
@@ -75,7 +75,7 @@ test("demo_full_flow preserves independent judgments and separates real records"
 });
 test("mobile navigation is operable", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("button", { name: "메뉴 열기" }).click();
   await page.getByRole("button", { name: "조사 기록", exact: true }).click();
   await expect(

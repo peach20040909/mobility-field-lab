@@ -30,7 +30,7 @@ test("local AI contract stores suggestions and keeps independent labels blind", 
     );
     return route.fulfill({ json: response });
   });
-  await page.goto("/");
+  await page.goto("./");
   await page.getByRole("button", { name: "새 조사 시작" }).click();
   await page.getByLabel("장소 이름").fill("AI 계약 검증");
   await page.getByRole("button", { name: "조사 저장" }).click();
