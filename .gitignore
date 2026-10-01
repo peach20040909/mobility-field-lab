@@ -9,3 +9,10 @@ dist/
 .next/
 coverage/
 *.log
+
+# Generated outputs
+out/
+test-results/
+playwright-report/
+*.tsbuildinfo
+.superpowers/

@@ -1,4 +1,51 @@
-import type {ProjectExport} from './schema';
-const cell=(s:unknown)=>{let t=String(s??'');if(/^[=+\-@\t\r\n]/.test(t))t="'"+t;return '"'+t.replaceAll('"','""')+'"'};
-export function toCsv(p:ProjectExport){const header=['source','city','place','date','segment_id','distance_m','device_id','canonical_id','kind','final_status','risks','fallen','A_status','B_status','AI_status','reason'];const rows=p.observations.map(o=>{const segment=p.segments.find(s=>s.id===o.segmentId);const session=p.sessions.find(s=>s.id===segment?.sessionId);return [session?.source,session?.city,session?.place,session?.date,o.segmentId,segment?.lengthM,o.id,o.canonicalDeviceId,o.final?.kind??o.kind,o.final?.status,o.final?.risks.join('|'),o.final?.fallen,o.judgments.A?.status,o.judgments.B?.status,o.judgments.AI?.status,o.final?.reason].map(cell).join(',')});return '\uFEFF'+[header.join(','),...rows].join('\r\n')}
-
+import type { ProjectExport } from "./schema";
+const cell = (s: unknown) => {
+  let t = String(s ?? "");
+  if (/^[=+\-@\t\r\n]/.test(t)) t = "'" + t;
+  return '"' + t.replaceAll('"', '""') + '"';
+};
+export function toCsv(p: ProjectExport) {
+  const header = [
+    "source",
+    "city",
+    "place",
+    "date",
+    "segment_id",
+    "distance_m",
+    "device_id",
+    "canonical_id",
+    "kind",
+    "final_status",
+    "risks",
+    "fallen",
+    "A_status",
+    "B_status",
+    "AI_status",
+    "reason",
+  ];
+  const rows = p.observations.map((o) => {
+    const segment = p.segments.find((s) => s.id === o.segmentId);
+    const session = p.sessions.find((s) => s.id === segment?.sessionId);
+    return [
+      session?.source,
+      session?.city,
+      session?.place,
+      session?.date,
+      o.segmentId,
+      segment?.lengthM,
+      o.id,
+      o.canonicalDeviceId,
+      o.final?.kind ?? o.kind,
+      o.final?.status,
+      o.final?.risks.join("|"),
+      o.final?.fallen,
+      o.judgments.A?.status,
+      o.judgments.B?.status,
+      o.judgments.AI?.status,
+      o.final?.reason,
+    ]
+      .map(cell)
+      .join(",");
+  });
+  return "\uFEFF" + [header.join(","), ...rows].join("\r\n");
+}
