@@ -15,7 +15,6 @@ import {
   Download,
   Check,
   Globe2,
-  Leaf,
   ShieldCheck,
   Menu,
   Upload,
@@ -226,6 +225,7 @@ export default function FieldLab() {
       <aside className={"sidebar " + (menu ? "open" : "")}>
         <a
           className="brand"
+          aria-label="인도지킴이들 · 프로젝트 개요"
           href="#"
           onClick={(e) => {
             e.preventDefault();
@@ -233,10 +233,15 @@ export default function FieldLab() {
           }}
         >
           <span className="brand-mark">
-            <Leaf size={23} />
+            <img
+              src={(process.env.NEXT_PUBLIC_BASE_PATH ?? "") + "/team-logo.svg"}
+              alt=""
+              width={43}
+              height={43}
+            />
           </span>
           <span>
-            Mobility<span className="brand-light">Field Lab</span>
+            인도지킴이들<span className="brand-light">보행자를 위한 관찰</span>
           </span>
         </a>
         <div className="workspace-label">2026 WINTER EXPEDITION</div>
@@ -256,7 +261,7 @@ export default function FieldLab() {
         <div className="sidebar-card">
           <span className="pill">
             <span />
-            B팀 · 해외탐방
+            인도지킴이들 · 해외탐방
           </span>
           <h3>
             더 나은 보도를 위한
@@ -269,9 +274,16 @@ export default function FieldLab() {
           </div>
         </div>
         <div className="sidebar-bottom">
-          <span className="avatar">M</span>
+          <span className="avatar">
+            <img
+              src={(process.env.NEXT_PUBLIC_BASE_PATH ?? "") + "/team-logo.svg"}
+              alt=""
+              width={33}
+              height={33}
+            />
+          </span>
           <div>
-            <strong>해외탐방 연구팀</strong>
+            <strong>인도지킴이들</strong>
             <span>장민준 · 김효준</span>
           </div>
           <ShieldCheck size={17} />
@@ -287,7 +299,17 @@ export default function FieldLab() {
             >
               <Menu size={22} />
             </button>
-            <span className="muted">연구 공간</span>
+            <span className="topbar-team">
+              <img
+                src={
+                  (process.env.NEXT_PUBLIC_BASE_PATH ?? "") + "/team-logo.svg"
+                }
+                alt=""
+                width={20}
+                height={20}
+              />
+              인도지킴이들
+            </span>
             <ChevronRight size={14} />
             <strong>{nav.find((n) => n.id === page)?.label}</strong>
           </div>
@@ -1344,9 +1366,19 @@ export default function FieldLab() {
             </>
           )}
           <footer className="footer">
-            <span>Mobility Field Lab</span>
+            <span className="footer-brand">
+              <img
+                src={
+                  (process.env.NEXT_PUBLIC_BASE_PATH ?? "") + "/team-logo.svg"
+                }
+                alt=""
+                width={24}
+                height={24}
+              />
+              인도지킴이들
+            </span>
             <span>작은 관찰이 만드는, 더 나은 보도.</span>
-            <span>2026–2027 · B팀</span>
+            <span>2026–2027 · 해외탐방</span>
           </footer>
         </div>
       </main>

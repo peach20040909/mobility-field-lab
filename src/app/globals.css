@@ -105,7 +105,32 @@ h3 {
 .brand-light {
   display: block;
   font-weight: 400;
-  font-size: 16px;
+  font-size: 11px;
+  margin-top: 4px;
+}
+.brand > span:last-child {
+  white-space: nowrap;
+}
+.brand-mark {
+  flex-shrink: 0;
+}
+.brand-mark img,
+.avatar img {
+  display: block;
+}
+.footer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.topbar-team {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 600;
 }
 .workspace-label {
   font-size: 9px;
@@ -1244,7 +1269,7 @@ fieldset {
     font-size: 16px;
   }
   .brand-light {
-    font-size: 14px;
+    font-size: 11px;
   }
   main {
     margin-left: 190px;
