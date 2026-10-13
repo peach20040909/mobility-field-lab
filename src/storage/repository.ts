@@ -7,6 +7,7 @@ import type {
   ProjectExport,
 } from "../domain/schema";
 export interface ResearchRepository {
+  loadHongdaeDemo(): Promise<string>;
   loadReviewDemo(): Promise<string>;
   saveAnalysis(photoId: string, input: unknown): Promise<void>;
   registerPhoto(

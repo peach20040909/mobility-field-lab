@@ -26,6 +26,8 @@ import { LocalRepository } from "@/storage/indexeddb";
 import { computeMetrics } from "@/domain/metrics";
 import { computeAgreement, getReviewStatus } from "@/domain/agreement";
 import { REVIEW_DEMO_ID } from "@/data/demo";
+import { HONGDAE_DEMO_ID } from "@/data/hongdae";
+import HongdaePrepared from "./review/HongdaePrepared";
 import { toCsv } from "@/domain/export";
 import { analyzePhoto, LOCAL_VISION_URL } from "@/ai/provider";
 import { cities } from "@/data/cities";
@@ -76,6 +78,7 @@ export default function FieldLab() {
   const [page, setPage] = useState<Page>("overview");
   const [source, setSource] = useState<"field" | "demo">("field");
   const [demoFocus, setDemoFocus] = useState<string>();
+  const hongdaeMode = source === "demo" && demoFocus === HONGDAE_DEMO_ID;
   const [modal, setModal] = useState(false);
   const [reviewId, setReviewId] = useState<string>();
   const [toast, setToast] = useState("");
@@ -91,14 +94,20 @@ export default function FieldLab() {
     setData(await repo.exportProject());
   };
   useEffect(() => {
-    repo
-      .exportProject()
-      .then(setData)
-      .catch(() =>
-        setError(
-          "브라우저 저장소에 접근할 수 없습니다. 일반 브라우저 창에서 다시 시도해 주세요.",
-        ),
-      );
+    const boot = async () => {
+      if (window.location.hash === "#hongdae") {
+        await repo.loadHongdaeDemo();
+        setDemoFocus(HONGDAE_DEMO_ID);
+        setSource("demo");
+        setPage("review");
+      }
+      setData(await repo.exportProject());
+    };
+    boot().catch(() =>
+      setError(
+        "브라우저 저장소에 접근할 수 없습니다. 일반 브라우저 창에서 다시 시도해 주세요.",
+      ),
+    );
   }, [repo]);
   useEffect(() => {
     if (!toast) return;
@@ -111,7 +120,9 @@ export default function FieldLab() {
         (s) =>
           s.source === source &&
           (source !== "demo" ||
-            (demoFocus ? s.id === demoFocus : s.id !== REVIEW_DEMO_ID)),
+            (demoFocus
+              ? s.id === demoFocus
+              : ![REVIEW_DEMO_ID, HONGDAE_DEMO_ID].includes(s.id))),
       ),
     [data, source, demoFocus],
   );
@@ -179,6 +190,16 @@ export default function FieldLab() {
     setSource("field");
     setToast("조사가 저장되었습니다");
   };
+  const loadHongdaeDemo = () =>
+    void action(async () => {
+      const id = await repo.loadHongdaeDemo();
+      setDemoFocus(id);
+      setSource("demo");
+      setPage("review");
+      setMenu(false);
+      setReviewId(undefined);
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }, "홍대 사전 분석 예시를 불러왔습니다");
   const selected = reviewId
     ? data.observations.find((o) => o.id === reviewId)
     : undefined;
@@ -193,8 +214,7 @@ export default function FieldLab() {
       <button
         className={source === "demo" ? "selected" : ""}
         onClick={() => {
-          setSource("demo");
-          setDemoFocus(undefined);
+          loadHongdaeDemo();
         }}
       >
         예시 데이터
@@ -205,8 +225,12 @@ export default function FieldLab() {
     source === "demo" ? (
       <p className="demo-notice">
         <span />
-        합성 예시 데이터 · 실제 조사 결과가 아닙니다
-        {demoFocus && " · 30초 독립 판정 예시"}
+        {hongdaeMode
+          ? "예시 데이터 · 실제 홍대 사진 · 저장된 사전 판정과 A/B 시연 예시"
+          : "합성 예시 데이터 · 실제 조사 결과가 아닙니다"}
+        {demoFocus === REVIEW_DEMO_ID && " · 30초 독립 판정 예시"}
+        {hongdaeMode &&
+          " · 거리 200m와 지도 위치는 시연 설정입니다. 대표 2장만 집계하며 반복 사진·기기 묶음은 대수에서 제외합니다."}
       </p>
     ) : (
       <p className="small muted">이 브라우저의 실제 기록 · 서버 공유 미연결</p>
@@ -314,11 +338,18 @@ export default function FieldLab() {
             <strong>{nav.find((n) => n.id === page)?.label}</strong>
           </div>
           <div className="header-right">
+            <button
+              className="secondary"
+              onClick={loadHongdaeDemo}
+              disabled={busy}
+            >
+              홍대 사전조사 시연
+            </button>
             <a
               href={(process.env.NEXT_PUBLIC_BASE_PATH ?? "") + "/demo/"}
               style={{ fontWeight: 800 }}
             >
-              AI 분석 시연 ↗
+              실시간 AI (실험) ↗
             </a>
             <span className="connection">
               <span />
@@ -706,368 +737,413 @@ export default function FieldLab() {
             <>
               <PageTitle
                 eyebrow="PHOTO & INDEPENDENT REVIEW"
-                title="판정마다 근거를 남깁니다."
-                desc="AI 연결 전에도 두 사람의 원판정과 조정 결과를 기록할 수 있습니다."
+                title={
+                  hongdaeMode
+                    ? "홍대 사전조사 시연"
+                    : "판정마다 근거를 남깁니다."
+                }
+                desc={
+                  hongdaeMode
+                    ? "사진과 저장된 판정을 확인하고, 독립 검수 결과를 숫자와 지도로 정리합니다."
+                    : "AI 연결 전에도 두 사람의 원판정과 조정 결과를 기록할 수 있습니다."
+                }
               />
               {sourceControl}
               {sourceNotice}
-              <div className="panel upload-panel">
-                <button
-                  className="secondary"
-                  onClick={loadReviewDemo}
-                  disabled={busy}
-                >
-                  30초 판정 예시
-                </button>
-                <div>
-                  <h3>현장 사진 등록</h3>
-                  <p className="small muted">
-                    JPEG · PNG · WebP / 최대 10MB · 외부 서버로 전송하지
-                    않습니다.
-                  </p>
-                </div>
-                <select
-                  aria-label="사진을 등록할 조사"
-                  value={uploadSession}
-                  onChange={(e) => setUploadSession(e.target.value)}
-                >
-                  <option value="">실제 조사 선택</option>
-                  {data.sessions
-                    .filter((s) => s.source === "field")
-                    .map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.place}
-                      </option>
-                    ))}
-                </select>
-                <label className="secondary upload-button">
-                  <Camera size={16} />
-                  사진 선택
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    disabled={!uploadSession || busy}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file)
-                        void action(async () => {
-                          if (
-                            file.size > 10 * 1024 * 1024 ||
-                            !["image/jpeg", "image/png", "image/webp"].includes(
-                              file.type,
-                            )
-                          )
-                            throw new Error(
-                              "JPEG/PNG/WebP 10MB 이하 사진만 등록할 수 있습니다",
-                            );
-                          const bitmap = await createImageBitmap(file);
-                          bitmap.close();
-                          const dataUrl = await new Promise<string>(
-                            (resolve, reject) => {
-                              const reader = new FileReader();
-                              reader.onload = () =>
-                                resolve(String(reader.result));
-                              reader.onerror = reject;
-                              reader.readAsDataURL(file);
-                            },
-                          );
-                          const segment = data.segments.find(
-                            (s) => s.sessionId === uploadSession,
-                          );
-                          if (!segment)
-                            throw new Error("조사 구간을 찾지 못했습니다");
-                          await repo.registerPhoto(
-                            {
-                              segmentId: segment.id,
-                              name: file.name,
-                              dataUrl,
-                              redacted: false,
-                              publicationReviewed: false,
-                            },
-                            kind === "none" ? undefined : kind,
-                          );
-                          setSource("field");
-                        }, "사진을 등록했습니다");
-                      e.target.value = "";
-                    }}
-                  />
-                </label>
-                <select
-                  aria-label="첫 기기 구분"
-                  value={kind}
-                  onChange={(e) =>
-                    setKind(e.target.value as Observation["kind"] | "none")
-                  }
-                >
-                  <option value="none">기기 없음 · 사진만 등록</option>
-                  {Object.entries(kindLabels).map(([k, v]) => (
-                    <option key={k} value={k}>
-                      {v}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="panel">
-                <h3>이 PC의 AI 서버</h3>
-                <p className="small muted">
-                  사진은 이 PC의 로컬 서버로 전달됩니다. 서버를 실행하고 연결
-                  토큰을 입력하세요. 토큰은 현재 화면에서만 보관합니다.
-                </p>
-                <div className="button-group">
-                  <input
-                    aria-label="로컬 AI 연결 토큰"
-                    type="password"
-                    value={visionToken}
-                    onChange={(e) => {
-                      setVisionToken(e.target.value);
-                      setVisionReady(false);
-                    }}
-                    placeholder="연결 토큰"
-                    autoComplete="off"
-                  />
-                  <button
-                    className="secondary"
-                    disabled={!visionToken || busy}
-                    onClick={() =>
-                      void action(async () => {
-                        setVisionReady(false);
-                        const res = await fetch(LOCAL_VISION_URL + "/connect", {
-                          headers: { Authorization: "Bearer " + visionToken },
-                          signal: AbortSignal.timeout(5000),
-                        }).catch(() => {
-                          throw new Error(
-                            "로컬 AI 서버에 연결할 수 없습니다. 서버 실행과 브라우저의 로컬 접근 허용을 확인하거나 로컬 화면을 이용하세요.",
-                          );
-                        });
-                        if (!res.ok || !(await res.json()).ready)
-                          throw new Error(
-                            "AI 서버가 준비되지 않았습니다. 수동 검수는 계속할 수 있습니다.",
-                          );
-                        setVisionReady(true);
-                      }, "로컬 AI 서버가 준비되었습니다")
-                    }
-                  >
-                    AI 연결 확인
-                  </button>
-                </div>
-                <p className="notice">
-                  {visionReady
-                    ? "로컬 AI 연결됨 · 기기 기록이 없는 실제 사진에서 분석할 수 있습니다."
-                    : "AI 미연결 · 수동 판정 가능"}{" "}
-                  예시의 AI 판정은 합성값입니다.
-                </p>
-                <p className="small muted">
-                  공개 사이트에서 연결할 때 브라우저의 로컬 접근 허용이 필요할
-                  수 있습니다.{" "}
-                  <a
-                    href="http://127.0.0.1:3000"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    로컬 화면 열기
-                  </a>
-                </p>
-              </div>
-              {data.photos
-                .filter(
-                  (p) =>
-                    segments.some((s) => s.id === p.segmentId) &&
-                    !observations.some((o) => o.photoId === p.id),
-                )
-                .map((photo) => (
-                  <article className="panel observation-card" key={photo.id}>
-                    <img
-                      src={
-                        photo.dataUrl.startsWith("/")
-                          ? (process.env.NEXT_PUBLIC_BASE_PATH ?? "") +
-                            photo.dataUrl
-                          : photo.dataUrl
-                      }
-                      alt={photo.name}
-                    />
-                    <div className="observation-body">
-                      <h3>{photo.name}</h3>
+              {hongdaeMode ? (
+                <HongdaePrepared
+                  observations={observations}
+                  onReview={setReviewId}
+                  onAnalysis={() => go("analysis")}
+                  onMap={() => go("map")}
+                />
+              ) : (
+                <>
+                  <div className="panel upload-panel">
+                    <button
+                      className="secondary"
+                      onClick={loadHongdaeDemo}
+                      disabled={busy}
+                    >
+                      홍대 사전조사 시연
+                    </button>
+                    <button
+                      className="secondary"
+                      onClick={loadReviewDemo}
+                      disabled={busy}
+                    >
+                      30초 판정 예시
+                    </button>
+                    <div>
+                      <h3>현장 사진 등록</h3>
                       <p className="small muted">
-                        사진만 등록됨 · 기록된 기기 0대
+                        JPEG · PNG · WebP / 최대 10MB · 외부 서버로 전송하지
+                        않습니다.
                       </p>
-                      {photo.analysis && (
-                        <p className="small muted">
-                          AI 분석 완료 · 검출 0대 · {photo.analysis.modelId}
-                        </p>
-                      )}
-                      {!photo.analysis && (
-                        <button
-                          className="secondary"
-                          disabled={!visionReady || busy || source !== "field"}
-                          onClick={() =>
+                    </div>
+                    <select
+                      aria-label="사진을 등록할 조사"
+                      value={uploadSession}
+                      onChange={(e) => setUploadSession(e.target.value)}
+                    >
+                      <option value="">실제 조사 선택</option>
+                      {data.sessions
+                        .filter((s) => s.source === "field")
+                        .map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.place}
+                          </option>
+                        ))}
+                    </select>
+                    <label className="secondary upload-button">
+                      <Camera size={16} />
+                      사진 선택
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        disabled={!uploadSession || busy}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file)
                             void action(async () => {
-                              const blob = await (
-                                await fetch(photo.dataUrl)
-                              ).blob();
-                              const result = await analyzePhoto(
-                                blob,
-                                visionToken,
+                              if (
+                                file.size > 10 * 1024 * 1024 ||
+                                ![
+                                  "image/jpeg",
+                                  "image/png",
+                                  "image/webp",
+                                ].includes(file.type)
+                              )
+                                throw new Error(
+                                  "JPEG/PNG/WebP 10MB 이하 사진만 등록할 수 있습니다",
+                                );
+                              const bitmap = await createImageBitmap(file);
+                              bitmap.close();
+                              const dataUrl = await new Promise<string>(
+                                (resolve, reject) => {
+                                  const reader = new FileReader();
+                                  reader.onload = () =>
+                                    resolve(String(reader.result));
+                                  reader.onerror = reject;
+                                  reader.readAsDataURL(file);
+                                },
                               );
-                              await repo.saveAnalysis(photo.id, result);
-                            }, "AI 분석을 저장했습니다. 독립 검수를 진행하세요.")
-                          }
-                        >
-                          AI로 기기 분석
-                        </button>
-                      )}
+                              const segment = data.segments.find(
+                                (s) => s.sessionId === uploadSession,
+                              );
+                              if (!segment)
+                                throw new Error("조사 구간을 찾지 못했습니다");
+                              await repo.registerPhoto(
+                                {
+                                  segmentId: segment.id,
+                                  name: file.name,
+                                  dataUrl,
+                                  redacted: false,
+                                  publicationReviewed: false,
+                                },
+                                kind === "none" ? undefined : kind,
+                              );
+                              setSource("field");
+                            }, "사진을 등록했습니다");
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                    <select
+                      aria-label="첫 기기 구분"
+                      value={kind}
+                      onChange={(e) =>
+                        setKind(e.target.value as Observation["kind"] | "none")
+                      }
+                    >
+                      <option value="none">기기 없음 · 사진만 등록</option>
+                      {Object.entries(kindLabels).map(([k, v]) => (
+                        <option key={k} value={k}>
+                          {v}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="panel">
+                    <h3>이 PC의 AI 서버</h3>
+                    <p className="small muted">
+                      사진은 이 PC의 로컬 서버로 전달됩니다. 서버를 실행하고
+                      연결 토큰을 입력하세요. 토큰은 현재 화면에서만 보관합니다.
+                    </p>
+                    <div className="button-group">
+                      <input
+                        aria-label="로컬 AI 연결 토큰"
+                        type="password"
+                        value={visionToken}
+                        onChange={(e) => {
+                          setVisionToken(e.target.value);
+                          setVisionReady(false);
+                        }}
+                        placeholder="연결 토큰"
+                        autoComplete="off"
+                      />
                       <button
                         className="secondary"
+                        disabled={!visionToken || busy}
                         onClick={() =>
                           void action(async () => {
-                            await repo.addObservation(
-                              photo.id,
-                              kind === "none" ? "unknown" : kind,
-                            );
-                          }, "사진에 기기를 추가했습니다")
+                            setVisionReady(false);
+                            const res = await fetch(
+                              LOCAL_VISION_URL + "/connect",
+                              {
+                                headers: {
+                                  Authorization: "Bearer " + visionToken,
+                                },
+                                signal: AbortSignal.timeout(5000),
+                              },
+                            ).catch(() => {
+                              throw new Error(
+                                "로컬 AI 서버에 연결할 수 없습니다. 서버 실행과 브라우저의 로컬 접근 허용을 확인하거나 로컬 화면을 이용하세요.",
+                              );
+                            });
+                            if (!res.ok || !(await res.json()).ready)
+                              throw new Error(
+                                "AI 서버가 준비되지 않았습니다. 수동 검수는 계속할 수 있습니다.",
+                              );
+                            setVisionReady(true);
+                          }, "로컬 AI 서버가 준비되었습니다")
                         }
                       >
-                        기기 추가
+                        AI 연결 확인
                       </button>
                     </div>
-                  </article>
-                ))}
-              {observations.length ? (
-                <div className="observation-grid">
-                  {observations.map((o, i) => {
-                    const photo = data.photos.find((p) => p.id === o.photoId);
-                    return (
-                      <article className="panel observation-card" key={o.id}>
-                        {photo && (
-                          <img
-                            src={
-                              photo.dataUrl.startsWith("/")
-                                ? (process.env.NEXT_PUBLIC_BASE_PATH ?? "") +
-                                  photo.dataUrl
-                                : photo.dataUrl
-                            }
-                            alt={photo.name}
-                          />
-                        )}
+                    <p className="notice">
+                      {visionReady
+                        ? "로컬 AI 연결됨 · 기기 기록이 없는 실제 사진에서 분석할 수 있습니다."
+                        : "AI 미연결 · 수동 판정 가능"}{" "}
+                      예시의 AI 판정은 합성값입니다.
+                    </p>
+                    <p className="small muted">
+                      공개 사이트에서 연결할 때 브라우저의 로컬 접근 허용이
+                      필요할 수 있습니다.{" "}
+                      <a
+                        href="http://127.0.0.1:3000"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        로컬 화면 열기
+                      </a>
+                    </p>
+                  </div>
+                  {data.photos
+                    .filter(
+                      (p) =>
+                        segments.some((s) => s.id === p.segmentId) &&
+                        !observations.some((o) => o.photoId === p.id),
+                    )
+                    .map((photo) => (
+                      <article
+                        className="panel observation-card"
+                        key={photo.id}
+                      >
+                        <img
+                          src={
+                            photo.dataUrl.startsWith("/")
+                              ? (process.env.NEXT_PUBLIC_BASE_PATH ?? "") +
+                                photo.dataUrl
+                              : photo.dataUrl
+                          }
+                          alt={photo.name}
+                        />
                         <div className="observation-body">
-                          <div className="section-heading">
-                            <span className="small muted">
-                              관찰 #{String(i + 1).padStart(2, "0")}
-                            </span>
-                            <span
-                              className={
-                                "status " + (o.final?.status ?? "pending")
-                              }
-                            >
-                              {o.final
-                                ? statusLabels[o.final.status]
-                                : "미검수"}
-                            </span>
-                          </div>
-                          <h3>{kindLabels[o.final?.kind ?? o.kind]}</h3>
-                          {getReviewStatus(o.judgments) !== "pending" && (
-                            <p
-                              className={
-                                getReviewStatus(o.judgments) === "mismatch"
-                                  ? "review-disagreement"
-                                  : "small muted"
-                              }
-                            >
-                              {getReviewStatus(o.judgments) === "mismatch"
-                                ? o.final
-                                  ? "불일치 · 조정 완료"
-                                  : "불일치 · 조정 대기"
-                                : "일치"}
+                          <h3>{photo.name}</h3>
+                          <p className="small muted">
+                            사진만 등록됨 · 기록된 기기 0대
+                          </p>
+                          {photo.analysis && (
+                            <p className="small muted">
+                              AI 분석 완료 · 검출 0대 · {photo.analysis.modelId}
                             </p>
                           )}
-                          <p className="small muted">
-                            A {o.judgments.A ? "완료" : "대기"} · B{" "}
-                            {o.judgments.B ? "완료" : "대기"}
-                            {o.canonicalDeviceId !== o.id ? " · 중복 연결" : ""}
-                          </p>
-                          <div className="button-group">
+                          {!photo.analysis && (
                             <button
                               className="secondary"
-                              onClick={() => {
-                                setToast("");
-                                setReviewId(o.canonicalDeviceId);
-                              }}
-                            >
-                              검수하기
-                              <ArrowUpRight size={14} />
-                            </button>
-                            <button
-                              className="text-button small"
+                              disabled={
+                                !visionReady || busy || source !== "field"
+                              }
                               onClick={() =>
                                 void action(async () => {
-                                  await repo.addObservation(
-                                    o.photoId,
-                                    kind === "none" ? "unknown" : kind,
+                                  const blob = await (
+                                    await fetch(photo.dataUrl)
+                                  ).blob();
+                                  const result = await analyzePhoto(
+                                    blob,
+                                    visionToken,
                                   );
-                                }, "같은 사진에 기기를 추가했습니다")
+                                  await repo.saveAnalysis(photo.id, result);
+                                }, "AI 분석을 저장했습니다. 독립 검수를 진행하세요.")
                               }
                             >
-                              기기 추가
+                              AI로 기기 분석
                             </button>
-                          </div>
-                          <label className="duplicate-label">
-                            동일 기기 연결
-                            <select
-                              value={
-                                o.canonicalDeviceId === o.id
-                                  ? ""
-                                  : o.canonicalDeviceId
-                              }
-                              onChange={(e) => {
-                                const target = e.target.value;
-                                void action(
-                                  () =>
-                                    target
-                                      ? repo.linkDuplicate(o.id, target)
-                                      : repo.unlinkDuplicate(o.id),
-                                  target
-                                    ? "중복 기기를 연결했습니다"
-                                    : "별도 기기로 변경했습니다",
+                          )}
+                          <button
+                            className="secondary"
+                            onClick={() =>
+                              void action(async () => {
+                                await repo.addObservation(
+                                  photo.id,
+                                  kind === "none" ? "unknown" : kind,
                                 );
-                              }}
-                            >
-                              <option value="">별도 기기</option>
-                              {observations
-                                .filter(
-                                  (x) =>
-                                    x.id !== o.id &&
-                                    x.canonicalDeviceId === x.id &&
-                                    data.segments.find(
-                                      (s) => s.id === x.segmentId,
-                                    )?.sessionId ===
-                                      data.segments.find(
-                                        (s) => s.id === o.segmentId,
-                                      )?.sessionId,
-                                )
-                                .map((x) => (
-                                  <option value={x.id} key={x.id}>
-                                    관찰 #
-                                    {String(
-                                      observations.indexOf(x) + 1,
-                                    ).padStart(2, "0")}
-                                  </option>
-                                ))}
-                            </select>
-                          </label>
+                              }, "사진에 기기를 추가했습니다")
+                            }
+                          >
+                            기기 추가
+                          </button>
                         </div>
                       </article>
-                    );
-                  })}
-                </div>
-              ) : data.photos.some((p) =>
-                  segments.some((s) => s.id === p.segmentId),
-                ) ? null : (
-                <Empty
-                  icon={ScanLine}
-                  title="검수할 사진이 없습니다."
-                  desc="실제 조사를 등록하고 사진을 추가하거나, 예시 데이터를 불러오세요."
-                  onClick={loadDemo}
-                  label="예시 데이터 불러오기"
-                />
+                    ))}
+                  {observations.length ? (
+                    <div className="observation-grid">
+                      {observations.map((o, i) => {
+                        const photo = data.photos.find(
+                          (p) => p.id === o.photoId,
+                        );
+                        return (
+                          <article
+                            className="panel observation-card"
+                            key={o.id}
+                          >
+                            {photo && (
+                              <img
+                                src={
+                                  photo.dataUrl.startsWith("/")
+                                    ? (process.env.NEXT_PUBLIC_BASE_PATH ??
+                                        "") + photo.dataUrl
+                                    : photo.dataUrl
+                                }
+                                alt={photo.name}
+                              />
+                            )}
+                            <div className="observation-body">
+                              <div className="section-heading">
+                                <span className="small muted">
+                                  관찰 #{String(i + 1).padStart(2, "0")}
+                                </span>
+                                <span
+                                  className={
+                                    "status " + (o.final?.status ?? "pending")
+                                  }
+                                >
+                                  {o.final
+                                    ? statusLabels[o.final.status]
+                                    : "미검수"}
+                                </span>
+                              </div>
+                              <h3>{kindLabels[o.final?.kind ?? o.kind]}</h3>
+                              {getReviewStatus(o.judgments) !== "pending" && (
+                                <p
+                                  className={
+                                    getReviewStatus(o.judgments) === "mismatch"
+                                      ? "review-disagreement"
+                                      : "small muted"
+                                  }
+                                >
+                                  {getReviewStatus(o.judgments) === "mismatch"
+                                    ? o.final
+                                      ? "불일치 · 조정 완료"
+                                      : "불일치 · 조정 대기"
+                                    : "일치"}
+                                </p>
+                              )}
+                              <p className="small muted">
+                                A {o.judgments.A ? "완료" : "대기"} · B{" "}
+                                {o.judgments.B ? "완료" : "대기"}
+                                {o.canonicalDeviceId !== o.id
+                                  ? " · 중복 연결"
+                                  : ""}
+                              </p>
+                              <div className="button-group">
+                                <button
+                                  className="secondary"
+                                  onClick={() => {
+                                    setToast("");
+                                    setReviewId(o.canonicalDeviceId);
+                                  }}
+                                >
+                                  검수하기
+                                  <ArrowUpRight size={14} />
+                                </button>
+                                <button
+                                  className="text-button small"
+                                  onClick={() =>
+                                    void action(async () => {
+                                      await repo.addObservation(
+                                        o.photoId,
+                                        kind === "none" ? "unknown" : kind,
+                                      );
+                                    }, "같은 사진에 기기를 추가했습니다")
+                                  }
+                                >
+                                  기기 추가
+                                </button>
+                              </div>
+                              <label className="duplicate-label">
+                                동일 기기 연결
+                                <select
+                                  value={
+                                    o.canonicalDeviceId === o.id
+                                      ? ""
+                                      : o.canonicalDeviceId
+                                  }
+                                  onChange={(e) => {
+                                    const target = e.target.value;
+                                    void action(
+                                      () =>
+                                        target
+                                          ? repo.linkDuplicate(o.id, target)
+                                          : repo.unlinkDuplicate(o.id),
+                                      target
+                                        ? "중복 기기를 연결했습니다"
+                                        : "별도 기기로 변경했습니다",
+                                    );
+                                  }}
+                                >
+                                  <option value="">별도 기기</option>
+                                  {observations
+                                    .filter(
+                                      (x) =>
+                                        x.id !== o.id &&
+                                        x.canonicalDeviceId === x.id &&
+                                        data.segments.find(
+                                          (s) => s.id === x.segmentId,
+                                        )?.sessionId ===
+                                          data.segments.find(
+                                            (s) => s.id === o.segmentId,
+                                          )?.sessionId,
+                                    )
+                                    .map((x) => (
+                                      <option value={x.id} key={x.id}>
+                                        관찰 #
+                                        {String(
+                                          observations.indexOf(x) + 1,
+                                        ).padStart(2, "0")}
+                                      </option>
+                                    ))}
+                                </select>
+                              </label>
+                            </div>
+                          </article>
+                        );
+                      })}
+                    </div>
+                  ) : data.photos.some((p) =>
+                      segments.some((s) => s.id === p.segmentId),
+                    ) ? null : (
+                    <Empty
+                      icon={ScanLine}
+                      title="검수할 사진이 없습니다."
+                      desc="실제 조사를 등록하고 사진을 추가하거나, 예시 데이터를 불러오세요."
+                      onClick={loadDemo}
+                      label="예시 데이터 불러오기"
+                    />
+                  )}
+                </>
               )}
             </>
           )}
@@ -1078,7 +1154,9 @@ export default function FieldLab() {
                 title="느낌을 넘어, 숫자로."
                 desc={
                   source === "demo"
-                    ? "합성 예시로 집계 흐름을 보여줍니다. 실제 측정 결과가 아닙니다."
+                    ? hongdaeMode
+                      ? "홍대 대표 사진의 사전 판정 예시입니다. A/B·거리·위치는 시연 설정이며 실제 조사 통계가 아닙니다."
+                      : "합성 예시로 집계 흐름을 보여줍니다. 실제 측정 결과가 아닙니다."
                     : "같은 기준으로 수집한 기록만 비교합니다. 비교는 정책 효과의 증명이 아닙니다."
                 }
                 action={

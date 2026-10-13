@@ -12,7 +12,9 @@ export function computeMetrics(
     const key = scope.get(o.segmentId) + "/" + o.canonicalDeviceId;
     if (o.id === o.canonicalDeviceId) unique.set(key, o);
   }
-  const candidates = [...unique.values()];
+  const candidates = [...unique.values()].filter(
+    (o) => o.countMode !== "group",
+  );
   const rows = candidates.filter(
     (o) => o.final && ["shared-scooter", "shared-ebike"].includes(o.final.kind),
   );

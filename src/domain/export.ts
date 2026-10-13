@@ -26,6 +26,10 @@ export function toCsv(p: ProjectExport) {
     "model_id",
     "model_version",
     "bbox",
+    "count_mode",
+    "prepared_source",
+    "prepared_note",
+    "photo_name",
   ];
   const rows = p.observations.map((o) => {
     const segment = p.segments.find((s) => s.id === o.segmentId);
@@ -52,12 +56,39 @@ export function toCsv(p: ProjectExport) {
       photo?.analysis?.modelId,
       photo?.analysis?.modelVersion,
       o.bbox?.join("|"),
+      o.countMode ?? "device",
+      photo?.preparedSource,
+      photo?.preparedNote,
+      photo?.name,
     ]
       .map(cell)
       .join(",");
   });
+  for (const photo of p.photos) {
+    if (p.observations.some((o) => o.photoId === photo.id)) continue;
+    const segment = p.segments.find((s) => s.id === photo.segmentId);
+    const session = p.sessions.find((s) => s.id === segment?.sessionId);
+    const fields = Array<unknown>(header.length).fill("");
+    const values: Record<string, unknown> = {
+      source: session?.source,
+      city: session?.city,
+      place: session?.place,
+      date: session?.date,
+      segment_id: segment?.id,
+      distance_m: segment?.lengthM,
+      reason: "기기별 판정 미확정 · 사진 검토 메모",
+      prepared_source: photo.preparedSource,
+      prepared_note: photo.preparedNote,
+      photo_name: photo.name,
+    };
+    header.forEach((key, index) => {
+      if (key in values) fields[index] = values[key];
+    });
+    rows.push(fields.map(cell).join(","));
+  }
   for (const segment of p.segments) {
     if (p.observations.some((o) => o.segmentId === segment.id)) continue;
+    if (p.photos.some((photo) => photo.segmentId === segment.id)) continue;
     const session = p.sessions.find((s) => s.id === segment.sessionId);
     rows.push(
       [
@@ -77,6 +108,10 @@ export function toCsv(p: ProjectExport) {
         "",
         "",
         "기록된 기기 0대",
+        "",
+        "",
+        "",
+        "",
         "",
         "",
         "",

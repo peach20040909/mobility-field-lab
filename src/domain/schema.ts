@@ -79,6 +79,8 @@ export const photoSchema = z.object({
   redacted: z.boolean(),
   publicationReviewed: z.boolean(),
   analysis: analysisMetadataSchema.optional(),
+  preparedSource: z.string().max(1000).optional(),
+  preparedNote: z.string().max(2000).optional(),
 });
 export type Photo = z.infer<typeof photoSchema>;
 export const observationSchema = z.object({
@@ -88,6 +90,7 @@ export const observationSchema = z.object({
   canonicalDeviceId: z.string(),
   kind: kindSchema,
   bbox: bboxSchema.optional(),
+  countMode: z.enum(["device", "group"]).optional(),
   judgments: z.object({
     A: judgmentSchema.optional(),
     B: judgmentSchema.optional(),

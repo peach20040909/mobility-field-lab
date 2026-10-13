@@ -13,6 +13,11 @@ import {
   type ProjectExport,
 } from "../domain/schema";
 import { demoProject, reviewDemoProject, REVIEW_DEMO_ID } from "../data/demo";
+import {
+  HONGDAE_DEMO_ID,
+  HONGDAE_PHOTO_PATHS,
+  hongdaeDemoProject,
+} from "../data/hongdae";
 import { imagePayload, decodePhoto } from "../domain/photo";
 import { analysisSchema } from "../ai/provider";
 import type { ResearchRepository } from "./repository";
@@ -140,6 +145,7 @@ export class LocalRepository implements ResearchRepository {
       if (!segment) throw new Error("잘못된 사진 참조");
       const source = p.sessions.find((s) => s.id === segment.sessionId)!.source;
       if (photo.dataUrl === "/demo-street.svg" && source === "demo") continue;
+      if (source === "demo" && HONGDAE_PHOTO_PATHS.has(photo.dataUrl)) continue;
       imagePayload(photo.dataUrl);
       if (!validatedImages.has(photo.dataUrl)) {
         await this.decoder(photo.dataUrl);
@@ -212,6 +218,11 @@ export class LocalRepository implements ResearchRepository {
     if (!(await this.db.sessions.get(REVIEW_DEMO_ID)))
       await this.importProject(reviewDemoProject());
     return REVIEW_DEMO_ID;
+  }
+  async loadHongdaeDemo() {
+    if (!(await this.db.sessions.get(HONGDAE_DEMO_ID)))
+      await this.importProject(hongdaeDemoProject());
+    return HONGDAE_DEMO_ID;
   }
   async savePhoto(input: Omit<Photo, "id">) {
     const photo = photoSchema.parse({ ...input, id: crypto.randomUUID() });

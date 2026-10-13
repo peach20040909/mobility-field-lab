@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import type { Session, Segment, Observation } from "@/domain/schema";
 import { computeMetrics } from "@/domain/metrics";
+import { HONGDAE_DEMO_ID } from "@/data/hongdae";
 import "leaflet/dist/leaflet.css";
 export default function ResearchMap({
   sessions,
@@ -38,7 +39,11 @@ export default function ResearchMap({
         content.textContent =
           s.place +
           " · " +
-          (s.source === "demo" ? "합성 예시" : "실제 조사") +
+          (s.id === HONGDAE_DEMO_ID
+            ? "홍대 사전 판정 예시 · 위치·거리 시연 설정"
+            : s.source === "demo"
+              ? "합성 예시"
+              : "실제 조사") +
           " · " +
           s.lengthM +
           "m · 확정 공유 " +

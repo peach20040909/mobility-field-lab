@@ -1538,3 +1538,17 @@ fieldset {
     gap: 18px;
   }
 }
+
+/* Larger text for the prepared Hongdae photo review. */
+.modal.wide.prepared-review { width: 1200px; color: #234332; }
+.prepared-review .notice, .prepared-review .demo-notice, .prepared-review .small,
+.prepared-review .verdicts, .prepared-review .verdicts p { font-size: 14px; color: #405b49; }
+.prepared-review .verdicts > div { background: #fff; }
+.prepared-review label, .prepared-review input, .prepared-review select,
+.prepared-review textarea, .prepared-review button { font-size: 15px; }
+.prepared-review .review-image { max-height: 420px; }
+@media (max-width: 650px) {
+  .prepared-review .notice, .prepared-review .demo-notice, .prepared-review .small,
+  .prepared-review .verdicts, .prepared-review .verdicts p { font-size: 12px; }
+  .prepared-review .review-image { max-height: 320px; }
+}

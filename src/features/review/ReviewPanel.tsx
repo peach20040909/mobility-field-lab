@@ -66,7 +66,9 @@ export default function ReviewPanel({
   return (
     <div className="modal-backdrop">
       <section
-        className="modal wide"
+        className={
+          "modal wide" + (photo?.preparedSource ? " prepared-review" : "")
+        }
         role="dialog"
         aria-modal="true"
         aria-labelledby="review-title"
@@ -86,7 +88,9 @@ export default function ReviewPanel({
         </p>
         {source === "demo" && (
           <p className="demo-notice">
-            예시 데이터 · 합성 사진과 판정이며 실제 측정 결과가 아닙니다
+            {photo?.preparedSource
+              ? "예시 데이터 · 실제 홍대 사진 · 사전 판정과 A/B 역할 시연 예시이며 최종 측정 결과가 아닙니다"
+              : "예시 데이터 · 합성 사진과 판정이며 실제 측정 결과가 아닙니다"}
           </p>
         )}
         {tabs}
@@ -142,6 +146,13 @@ export default function ReviewPanel({
                 모델: {photo.analysis.modelId} ·{" "}
                 {photo.analysis.modelVersion.slice(0, 12)} ·{" "}
                 {photo.analysis.timestamp} · {photo.analysis.seconds}초
+              </p>
+            )}
+            {photo?.preparedSource && (
+              <p className="notice">
+                {photo.preparedSource.replace(/^Claude 자료의/, "팀 자료의")}
+                {observation.countMode === "group" &&
+                  " · 여러 기기의 묶음: 대수·비율 집계 제외"}
               </p>
             )}
             <p className="small muted">
