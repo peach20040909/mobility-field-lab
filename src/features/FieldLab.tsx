@@ -314,6 +314,12 @@ export default function FieldLab() {
             <strong>{nav.find((n) => n.id === page)?.label}</strong>
           </div>
           <div className="header-right">
+            <a
+              href={(process.env.NEXT_PUBLIC_BASE_PATH ?? "") + "/demo/"}
+              style={{ fontWeight: 800 }}
+            >
+              AI 분석 시연 ↗
+            </a>
             <span className="connection">
               <span />
               로컬 저장

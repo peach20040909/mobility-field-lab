@@ -66,7 +66,7 @@ def create_app(engine=None, token=None):
             elapsed = time.monotonic()-started
             if elapsed > 60:
                 raise HTTPException(504,"Analysis exceeded 60 seconds")
-            return {"modelId":MODEL_ID,"modelVersion":MODEL_REVISION,"timestamp":datetime.now(timezone.utc).isoformat(),"seconds":round(elapsed,2),"observations":[o.model_dump() for o in result.observations],"warnings":["Experimental model output; independent human review required"]}
+            return {"modelId":MODEL_ID,"modelVersion":MODEL_REVISION,"timestamp":datetime.now(timezone.utc).isoformat(),"seconds":round(elapsed,2),"observations":[o.model_dump() for o in result.observations],"warnings":["실험 단계의 AI 판정입니다. 두 사람의 독립 검수가 필요합니다."]}
         finally:
             image.close()
             gate.release()
