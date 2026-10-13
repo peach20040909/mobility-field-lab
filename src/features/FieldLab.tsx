@@ -997,7 +997,11 @@ export default function FieldLab() {
               <PageTitle
                 eyebrow="EVIDENCE, NOT IMPRESSIONS"
                 title="느낌을 넘어, 숫자로."
-                desc="같은 기준으로 수집한 기록만 비교합니다. 비교는 정책 효과의 증명이 아닙니다."
+                desc={
+                  source === "demo"
+                    ? "합성 예시로 집계 흐름을 보여줍니다. 실제 측정 결과가 아닙니다."
+                    : "같은 기준으로 수집한 기록만 비교합니다. 비교는 정책 효과의 증명이 아닙니다."
+                }
                 action={
                   <button
                     className="secondary"
@@ -1053,7 +1057,9 @@ export default function FieldLab() {
               </div>
               <section className="panel">
                 <div className="section-heading">
-                  <h2>조사별 비교</h2>
+                  <h2>
+                    {source === "demo" ? "예시 조사별 비교" : "조사별 비교"}
+                  </h2>
                   <span className="pill">기술 통계 · 순위 없음</span>
                 </div>
                 <div className="table-scroll">
@@ -1181,7 +1187,11 @@ export default function FieldLab() {
               <PageTitle
                 eyebrow="WALKING THE SAME QUESTION"
                 title="지도 위에 남기는 관찰."
-                desc="조사 시작점만 표시합니다. 실제 보행 경로 또는 주차칸 설치 후보지는 아닙니다."
+                desc={
+                  source === "demo"
+                    ? "예시 조사 시작점을 표시합니다. 실제 측정 위치·보행 경로·주차칸 설치 후보지가 아닙니다."
+                    : "조사 시작점만 표시합니다. 실제 보행 경로 또는 주차칸 설치 후보지는 아닙니다."
+                }
               />
               {sourceControl}
               {sourceNotice}
@@ -1189,7 +1199,7 @@ export default function FieldLab() {
                 <ResearchMap sessions={sessions} />
                 <div className="map-legend">
                   <span className="legend-dot" />
-                  조사 시작점
+                  {source === "demo" ? "예시 조사 시작점" : "조사 시작점"}
                   <span className="small muted">
                     기본 좌표를 사용했다면 실제 위치로 수정하세요.
                   </span>
