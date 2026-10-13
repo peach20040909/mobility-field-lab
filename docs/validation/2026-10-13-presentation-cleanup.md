@@ -29,4 +29,4 @@
 - 파리 시의 2023년 투표 이후 서비스 종료 안내: https://www.paris.fr/pages/pour-ou-contre-les-trottinettes-en-libre-service-23231 .
 - 바르셀로나 시의 공유 전기자전거·모터스쿠터 허가 제도 자료: https://bcnroc.ajuntament.barcelona.cat/jspui/bitstream/11703/140067/1/20241121_LLIBRE_IMa__14-03.pdf .
 
-배포 성공 및 배포 URL의 렌더링 검사는 후속 확인한다.
+GitHub Actions run 38413738783의 검증·배포 성공을 확인했다. 배포된 e18b4b0 버전에서 동일한 52개 상태를 다시 렌더링했으며 금지 단어 0건, 반응형 감사 4개 테스트 통과(17.7초). docs/screenshots의 review-*.png와 map-*.png는 공개 배포 URL에서 캡처한 화면이다.
