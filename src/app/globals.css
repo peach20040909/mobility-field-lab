@@ -579,6 +579,21 @@ main {
   font-size: 10px;
   color: var(--green);
 }
+.review-disagreement {
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #fff0e8;
+  color: #934628;
+  font-size: 12px;
+}
+.reviewer-tabs {
+  margin-bottom: 16px;
+}
+.verdicts p {
+  font-size: 12px;
+  margin: 6px 0;
+  overflow-wrap: anywhere;
+}
 .city-card .policy {
   overflow-wrap: anywhere;
 }
@@ -1114,6 +1129,17 @@ textarea {
   color: #8b997d;
   flex-wrap: wrap;
   margin-top: 12px;
+}
+.verdicts > div {
+  width: 100%;
+  border: 1px solid var(--line);
+  padding: 10px;
+  border-radius: 6px;
+}
+.review-grid form > fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 .verdicts span {
   border: 1px solid var(--line);

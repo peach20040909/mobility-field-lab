@@ -23,7 +23,7 @@ test("demo_full_flow preserves independent judgments and separates real records"
   ).toBeVisible();
   await page.getByLabel("판정 사유").fill("면접 시연 점자블록 위");
   await page.getByRole("button", { name: "A 판정 제출" }).click();
-  await page.getByRole("button", { name: "검수자 B", exact: true }).click();
+  await page.getByRole("button", { name: "판정자 B", exact: true }).click();
   await page.getByLabel("판정 사유").fill("두 번째 독립 판정");
   await page.getByRole("button", { name: "B 판정 제출" }).click();
   await page.getByRole("button", { name: "최종 조정", exact: true }).click();

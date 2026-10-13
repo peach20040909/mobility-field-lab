@@ -38,7 +38,7 @@ describe("research metrics", () => {
       device("8", null),
     ];
     const m = computeMetrics([segment], o as never);
-    expect(m.density).toBe(2);
+    expect(m.density).toBeCloseTo(1.75);
     expect(m.ratio).toBe(0.5);
     expect(m.unreviewed).toBe(1);
     expect(m.unassessable).toBe(1);

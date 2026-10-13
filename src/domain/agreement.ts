@@ -1,5 +1,16 @@
 import type { Judgment } from "./schema";
 export type JudgmentPair = { left?: Judgment; right?: Judgment };
+export function getReviewStatus(judgments: { A?: Judgment; B?: Judgment }) {
+  const { A, B } = judgments;
+  if (!A || !B) return "pending";
+  const risks = (j: Judgment) => [...new Set(j.risks)].sort().join("|");
+  return A.kind === B.kind &&
+    A.status === B.status &&
+    A.fallen === B.fallen &&
+    risks(A) === risks(B)
+    ? "matched"
+    : "mismatch";
+}
 export function computeAgreement(pairs: JudgmentPair[]) {
   const valid = pairs.filter(
     (p) =>
@@ -11,7 +22,7 @@ export function computeAgreement(pairs: JudgmentPair[]) {
       p.right.kind !== "unknown",
   );
   const matched = valid.filter(
-    (p) => p.left!.status === p.right!.status && p.left!.kind === p.right!.kind,
+    (p) => getReviewStatus({ A: p.left, B: p.right }) === "matched",
   ).length;
   return {
     matched,

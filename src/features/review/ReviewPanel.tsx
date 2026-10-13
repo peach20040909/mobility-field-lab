@@ -2,6 +2,7 @@
 import { useState } from "react";
 import type { Observation, Photo, Judgment } from "@/domain/schema";
 import { kindLabels, statusLabels, riskLabels } from "@/domain/schema";
+import { getReviewStatus } from "@/domain/agreement";
 import type { LocalRepository } from "@/storage/indexeddb";
 export default function ReviewPanel({
   observation,
@@ -19,18 +20,49 @@ export default function ReviewPanel({
   onClose: () => void;
 }) {
   const [role, setRole] = useState<"A" | "B" | "resolve">("A");
-  const [j, setJ] = useState<Judgment>({
-    kind: observation.kind,
-    status: "normal",
-    risks: [],
-    fallen: false,
-    reason: "",
-  });
+  const [j, setJ] = useState<Judgment>(
+    observation.judgments.A ?? {
+      kind: observation.kind,
+      status: "normal",
+      risks: [],
+      fallen: false,
+      reason: "",
+    },
+  );
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const current =
     role === "resolve" ? observation.final : observation.judgments[role];
-  const visible = role === "resolve" || !!current;
+  const visible = !!observation.judgments.A && !!observation.judgments.B;
+  const comparison = getReviewStatus(observation.judgments);
+  const tabs = (
+    <div className="tabs reviewer-tabs">
+      {(["A", "B", "resolve"] as const).map((r) => (
+        <button
+          key={r}
+          className={role === r ? "selected" : ""}
+          disabled={busy || (r === "resolve" && !visible)}
+          onClick={() => {
+            setRole(r);
+            setError("");
+            setJ(
+              (r === "resolve"
+                ? observation.final
+                : observation.judgments[r]) ?? {
+                kind: observation.kind,
+                status: "normal",
+                risks: [],
+                fallen: false,
+                reason: "",
+              },
+            );
+          }}
+        >
+          {r === "resolve" ? "최종 조정" : "판정자 " + r}
+        </button>
+      ))}
+    </div>
+  );
   return (
     <div className="modal-backdrop">
       <section
@@ -49,12 +81,26 @@ export default function ReviewPanel({
           </button>
         </div>
         <p className="notice">
-          로컬 역할 시연입니다. 실제 독립 검수는 서로 다른 계정의 서버 연결이
-          필요합니다.
+          한 기기의 A/B 역할 전환입니다. 두 사람이 모두 제출한 뒤 결과를
+          비교합니다. 기기 간 자동 공유는 없습니다.
         </p>
         {source === "demo" && (
           <p className="demo-notice">
             예시 데이터 · 합성 사진과 판정이며 실제 측정 결과가 아닙니다
+          </p>
+        )}
+        {tabs}
+        {visible && (
+          <p
+            className={
+              comparison === "mismatch" ? "review-disagreement" : "notice"
+            }
+          >
+            {comparison === "mismatch"
+              ? observation.final
+                ? "불일치 · 조정 완료"
+                : "불일치 · 조정 대기"
+              : "일치"}
           </p>
         )}
         <div className="review-grid">
@@ -110,41 +156,56 @@ export default function ReviewPanel({
             </div>
           </div>
           <div>
-            <div className="tabs">
-              {(["A", "B", "resolve"] as const).map((r) => (
-                <button
-                  key={r}
-                  className={role === r ? "selected" : ""}
-                  onClick={() => {
-                    setRole(r);
-                    setError("");
-                    setJ({
-                      kind: observation.kind,
-                      status: "normal",
-                      risks: [],
-                      fallen: false,
-                      reason: "",
-                    });
-                  }}
-                >
-                  {r === "resolve" ? "최종 조정" : "검수자 " + r}
-                </button>
-              ))}
-            </div>
             {!visible && (
               <p className="small muted">
-                독립 판정 전에는 AI와 상대 판정을 숨깁니다.
+                독립 판정 전에는 AI와 상대 판정을 숨깁니다. 두 사람 모두 제출한
+                뒤 공개합니다.
               </p>
             )}
             {visible && (
               <div className="verdicts">
                 {(["A", "B", "AI"] as const).map((r) => (
-                  <span key={r}>
+                  <div key={r}>
                     {r}:{" "}
                     {observation.judgments[r]
                       ? statusLabels[observation.judgments[r]!.status]
                       : "미제출"}
-                  </span>
+                    {observation.judgments[r] && (
+                      <>
+                        <p>
+                          {kindLabels[observation.judgments[r]!.kind]} · 위험
+                          위치:{" "}
+                          {observation.judgments[r]!.risks.map(
+                            (x) => riskLabels[x],
+                          ).join(", ") || "없음"}{" "}
+                          · 쓰러짐:{" "}
+                          {observation.judgments[r]!.fallen ? "예" : "아니오"}
+                        </p>
+                        <p>{observation.judgments[r]!.reason}</p>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {!visible && current && (
+              <p className="notice">
+                내 원판정: {statusLabels[current.status]} · {current.reason}
+              </p>
+            )}
+            {role === "resolve" && visible && (
+              <div className="button-group">
+                {(["A", "B"] as const).map((r) => (
+                  <button
+                    type="button"
+                    className="secondary"
+                    key={r}
+                    onClick={() =>
+                      setJ({ ...observation.judgments[r]!, reason: "" })
+                    }
+                  >
+                    {r} 판정 불러오기
+                  </button>
                 ))}
               </div>
             )}
@@ -167,83 +228,88 @@ export default function ReviewPanel({
                 }
               }}
             >
-              <label>
-                기기 구분
-                <select
-                  value={j.kind}
-                  onChange={(e) =>
-                    setJ({ ...j, kind: e.target.value as Judgment["kind"] })
-                  }
-                >
-                  {Object.entries(kindLabels).map(([k, v]) => (
-                    <option key={k} value={k}>
-                      {v}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                주차 상태
-                <select
-                  value={j.status}
-                  onChange={(e) =>
-                    setJ({ ...j, status: e.target.value as Judgment["status"] })
-                  }
-                >
-                  {Object.entries(statusLabels).map(([k, v]) => (
-                    <option key={k} value={k}>
-                      {v}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <fieldset>
-                <legend>위험 위치 (복수 선택)</legend>
-                <div className="checkbox-grid">
-                  {Object.entries(riskLabels).map(([k, v]) => (
-                    <label key={k}>
-                      <input
-                        type="checkbox"
-                        checked={j.risks.includes(
-                          k as Judgment["risks"][number],
-                        )}
-                        onChange={(e) =>
-                          setJ({
-                            ...j,
-                            risks: e.target.checked
-                              ? [...j.risks, k as Judgment["risks"][number]]
-                              : j.risks.filter((r) => r !== k),
-                          })
-                        }
-                      />
-                      {v}
-                    </label>
-                  ))}
-                </div>
+              <fieldset disabled={busy || (role !== "resolve" && !!current)}>
+                <label>
+                  기기 구분
+                  <select
+                    value={j.kind}
+                    onChange={(e) =>
+                      setJ({ ...j, kind: e.target.value as Judgment["kind"] })
+                    }
+                  >
+                    {Object.entries(kindLabels).map(([k, v]) => (
+                      <option key={k} value={k}>
+                        {v}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  주차 상태
+                  <select
+                    value={j.status}
+                    onChange={(e) =>
+                      setJ({
+                        ...j,
+                        status: e.target.value as Judgment["status"],
+                      })
+                    }
+                  >
+                    {Object.entries(statusLabels).map(([k, v]) => (
+                      <option key={k} value={k}>
+                        {v}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <fieldset>
+                  <legend>위험 위치 (복수 선택)</legend>
+                  <div className="checkbox-grid">
+                    {Object.entries(riskLabels).map(([k, v]) => (
+                      <label key={k}>
+                        <input
+                          type="checkbox"
+                          checked={j.risks.includes(
+                            k as Judgment["risks"][number],
+                          )}
+                          onChange={(e) =>
+                            setJ({
+                              ...j,
+                              risks: e.target.checked
+                                ? [...j.risks, k as Judgment["risks"][number]]
+                                : j.risks.filter((r) => r !== k),
+                            })
+                          }
+                        />
+                        {v}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                <label className="check-label">
+                  <input
+                    type="checkbox"
+                    checked={j.fallen}
+                    onChange={(e) => setJ({ ...j, fallen: e.target.checked })}
+                  />
+                  쓰러진 기기
+                </label>
+                <label>
+                  판정 사유
+                  <textarea
+                    value={j.reason}
+                    onChange={(e) => setJ({ ...j, reason: e.target.value })}
+                    required
+                    maxLength={2000}
+                    placeholder="무엇을 보고 판단했는지 적어 주세요."
+                  />
+                </label>
+                {error && (
+                  <p className="error" role="alert">
+                    {error}
+                  </p>
+                )}
               </fieldset>
-              <label className="check-label">
-                <input
-                  type="checkbox"
-                  checked={j.fallen}
-                  onChange={(e) => setJ({ ...j, fallen: e.target.checked })}
-                />
-                쓰러진 기기
-              </label>
-              <label>
-                판정 사유
-                <textarea
-                  value={j.reason}
-                  onChange={(e) => setJ({ ...j, reason: e.target.value })}
-                  required
-                  maxLength={2000}
-                  placeholder="무엇을 보고 판단했는지 적어 주세요."
-                />
-              </label>
-              {error && (
-                <p className="error" role="alert">
-                  {error}
-                </p>
-              )}
               {role !== "resolve" && current ? (
                 <p className="notice">
                   원판정 제출 완료 · 수정하지 않고 보존합니다.

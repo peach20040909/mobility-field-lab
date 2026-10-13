@@ -22,6 +22,10 @@ it("hides other and AI verdicts before independent submission", async () => {
   const view = await repo.getReviewView(id, "B");
   expect(view.judgments.A).toBeUndefined();
   expect(view.judgments.AI).toBeUndefined();
+  const own = await repo.getReviewView(id, "A");
+  expect(own.judgments.A).toEqual(judgment);
+  expect(own.final).toBeUndefined();
+  expect(own.history).toEqual([]);
 });
 it("preserves original judgments and rejects overwriting", async () => {
   const { repo, id } = await setup();

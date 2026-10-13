@@ -12,7 +12,7 @@ import {
   type Judgment,
   type ProjectExport,
 } from "../domain/schema";
-import { demoProject } from "../data/demo";
+import { demoProject, reviewDemoProject, REVIEW_DEMO_ID } from "../data/demo";
 import { imagePayload, decodePhoto } from "../domain/photo";
 import { analysisSchema } from "../ai/provider";
 import type { ResearchRepository } from "./repository";
@@ -208,6 +208,11 @@ export class LocalRepository implements ResearchRepository {
     if (existing.every(Boolean)) return;
     await this.importProject(p);
   }
+  async loadReviewDemo() {
+    if (!(await this.db.sessions.get(REVIEW_DEMO_ID)))
+      await this.importProject(reviewDemoProject());
+    return REVIEW_DEMO_ID;
+  }
   async savePhoto(input: Omit<Photo, "id">) {
     const photo = photoSchema.parse({ ...input, id: crypto.randomUUID() });
     if (!(await this.db.segments.get(photo.segmentId)))
@@ -303,8 +308,15 @@ export class LocalRepository implements ResearchRepository {
   }
   async getReviewView(id: string, reviewer: "A" | "B") {
     const o = await this.observation(id);
-    if (o.judgments[reviewer]) return o;
-    return { ...o, judgments: {}, final: undefined, history: [] };
+    if (o.judgments.A && o.judgments.B) return o;
+    return {
+      ...o,
+      judgments: o.judgments[reviewer]
+        ? { [reviewer]: o.judgments[reviewer] }
+        : {},
+      final: undefined,
+      history: [],
+    };
   }
   async linkDuplicate(id: string, canonicalId: string) {
     await this.db.transaction(

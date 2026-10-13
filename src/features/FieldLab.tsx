@@ -25,7 +25,8 @@ import {
 } from "lucide-react";
 import { LocalRepository } from "@/storage/indexeddb";
 import { computeMetrics } from "@/domain/metrics";
-import { computeAgreement } from "@/domain/agreement";
+import { computeAgreement, getReviewStatus } from "@/domain/agreement";
+import { REVIEW_DEMO_ID } from "@/data/demo";
 import { toCsv } from "@/domain/export";
 import { analyzePhoto, LOCAL_VISION_URL } from "@/ai/provider";
 import { cities } from "@/data/cities";
@@ -75,6 +76,7 @@ export default function FieldLab() {
   const [data, setData] = useState<ProjectExport>(empty);
   const [page, setPage] = useState<Page>("overview");
   const [source, setSource] = useState<"field" | "demo">("field");
+  const [demoFocus, setDemoFocus] = useState<string>();
   const [modal, setModal] = useState(false);
   const [reviewId, setReviewId] = useState<string>();
   const [toast, setToast] = useState("");
@@ -105,8 +107,14 @@ export default function FieldLab() {
     return () => clearTimeout(timer);
   }, [toast]);
   const sessions = useMemo(
-    () => data.sessions.filter((s) => s.source === source),
-    [data, source],
+    () =>
+      data.sessions.filter(
+        (s) =>
+          s.source === source &&
+          (source !== "demo" ||
+            (demoFocus ? s.id === demoFocus : s.id !== REVIEW_DEMO_ID)),
+      ),
+    [data, source, demoFocus],
   );
   const segments = useMemo(
     () =>
@@ -154,8 +162,18 @@ export default function FieldLab() {
   const loadDemo = () =>
     action(async () => {
       await repo.loadDemo();
+      setDemoFocus(undefined);
       setSource("demo");
     }, "예시 데이터가 준비되었습니다");
+  const loadReviewDemo = () =>
+    void action(async () => {
+      const id = await repo.loadReviewDemo();
+      setSource("demo");
+      setDemoFocus(id);
+      setPage("review");
+      setMenu(false);
+      setReviewId(id + "-3");
+    }, "");
   const save = async (input: SessionInput) => {
     await repo.createSession(input);
     await refresh();
@@ -175,7 +193,10 @@ export default function FieldLab() {
       </button>
       <button
         className={source === "demo" ? "selected" : ""}
-        onClick={() => setSource("demo")}
+        onClick={() => {
+          setSource("demo");
+          setDemoFocus(undefined);
+        }}
       >
         예시 데이터
       </button>
@@ -186,6 +207,7 @@ export default function FieldLab() {
       <p className="demo-notice">
         <span />
         합성 예시 데이터 · 실제 조사 결과가 아닙니다
+        {demoFocus && " · 30초 독립 판정 예시"}
       </p>
     ) : (
       <p className="small muted">이 브라우저의 실제 기록 · 서버 공유 미연결</p>
@@ -513,6 +535,13 @@ export default function FieldLab() {
                     탐방 지도
                     <ArrowUpRight size={16} />
                   </button>
+                  <button
+                    className="secondary"
+                    onClick={loadReviewDemo}
+                    disabled={busy}
+                  >
+                    30초 판정 예시
+                  </button>
                 </div>
                 <div className="city-cards">
                   {cities.slice(1, 5).map((c) => (
@@ -655,6 +684,13 @@ export default function FieldLab() {
               {sourceControl}
               {sourceNotice}
               <div className="panel upload-panel">
+                <button
+                  className="secondary"
+                  onClick={loadReviewDemo}
+                  disabled={busy}
+                >
+                  30초 판정 예시
+                </button>
                 <div>
                   <h3>현장 사진 등록</h3>
                   <p className="small muted">
@@ -900,6 +936,21 @@ export default function FieldLab() {
                             </span>
                           </div>
                           <h3>{kindLabels[o.final?.kind ?? o.kind]}</h3>
+                          {getReviewStatus(o.judgments) !== "pending" && (
+                            <p
+                              className={
+                                getReviewStatus(o.judgments) === "mismatch"
+                                  ? "review-disagreement"
+                                  : "small muted"
+                              }
+                            >
+                              {getReviewStatus(o.judgments) === "mismatch"
+                                ? o.final
+                                  ? "불일치 · 조정 완료"
+                                  : "불일치 · 조정 대기"
+                                : "일치"}
+                            </p>
+                          )}
                           <p className="small muted">
                             A {o.judgments.A ? "완료" : "대기"} · B{" "}
                             {o.judgments.B ? "완료" : "대기"}
@@ -1047,8 +1098,11 @@ export default function FieldLab() {
                   label="사람 간 일치율"
                   value={percent(agreement.rate)}
                   foot={
+                    "일치 " +
                     agreement.matched +
-                    " / " +
+                    " · 불일치 " +
+                    (agreement.total - agreement.matched) +
+                    " · 비교 " +
                     agreement.total +
                     "쌍 · 제외 " +
                     agreement.excluded
@@ -1196,12 +1250,20 @@ export default function FieldLab() {
               {sourceControl}
               {sourceNotice}
               <section className="panel map-panel">
-                <ResearchMap sessions={sessions} />
+                <ResearchMap
+                  sessions={sessions}
+                  segments={segments}
+                  observations={observations}
+                />
                 <div className="map-legend">
                   <span className="legend-dot" />
                   {source === "demo" ? "예시 조사 시작점" : "조사 시작점"}
                   <span className="small muted">
                     기본 좌표를 사용했다면 실제 위치로 수정하세요.
+                  </span>
+                  <span className="small muted">
+                    주황: 방해·위험 확정 있음 · 초록: 방해·위험 확정 없음 ·
+                    회색: 판정 표본 없음
                   </span>
                 </div>
               </section>

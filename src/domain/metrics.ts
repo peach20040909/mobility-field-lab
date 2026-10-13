@@ -12,8 +12,9 @@ export function computeMetrics(
     const key = scope.get(o.segmentId) + "/" + o.canonicalDeviceId;
     if (o.id === o.canonicalDeviceId) unique.set(key, o);
   }
-  const rows = [...unique.values()].filter((o) =>
-    ["shared-scooter", "shared-ebike"].includes(o.final?.kind ?? o.kind),
+  const candidates = [...unique.values()];
+  const rows = candidates.filter(
+    (o) => o.final && ["shared-scooter", "shared-ebike"].includes(o.final.kind),
   );
   const judged = rows.filter(
     (o) => o.final && o.final.status !== "unassessable",
@@ -32,7 +33,7 @@ export function computeMetrics(
     ratio: judged.length ? bad.length / judged.length : null,
     judged: judged.length,
     bad: bad.length,
-    unreviewed: rows.filter((o) => !o.final).length,
+    unreviewed: candidates.filter((o) => !o.final).length,
     unassessable: rows.filter((o) => o.final?.status === "unassessable").length,
     risks,
     fallen: judged.filter((o) => o.final!.fallen).length,
