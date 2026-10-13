@@ -1,0 +1,80 @@
+[
+  {
+    "view": "프로젝트 개요",
+    "source": "field",
+    "hits": [],
+    "scrollWidth": 768
+  },
+  {
+    "view": "조사 기록",
+    "source": "field",
+    "hits": [],
+    "scrollWidth": 768
+  },
+  {
+    "view": "사진 판정 · 검수",
+    "source": "field",
+    "hits": [],
+    "scrollWidth": 768
+  },
+  {
+    "view": "분석 대시보드",
+    "source": "field",
+    "hits": [],
+    "scrollWidth": 768
+  },
+  {
+    "view": "조사 지도",
+    "source": "field",
+    "hits": [],
+    "scrollWidth": 768
+  },
+  {
+    "view": "조사 방법",
+    "source": "field",
+    "hits": [],
+    "scrollWidth": 768
+  },
+  {
+    "view": "프로젝트 개요",
+    "source": "demo",
+    "hits": [],
+    "scrollWidth": 768
+  },
+  {
+    "view": "조사 기록",
+    "source": "demo",
+    "hits": [],
+    "scrollWidth": 768
+  },
+  {
+    "view": "사진 판정 · 검수",
+    "source": "demo",
+    "hits": [],
+    "scrollWidth": 768
+  },
+  {
+    "view": "검수 팝업",
+    "source": "demo",
+    "hits": [],
+    "scrollWidth": 718
+  },
+  {
+    "view": "분석 대시보드",
+    "source": "demo",
+    "hits": [],
+    "scrollWidth": 768
+  },
+  {
+    "view": "조사 지도",
+    "source": "demo",
+    "hits": [],
+    "scrollWidth": 768
+  },
+  {
+    "view": "조사 방법",
+    "source": "demo",
+    "hits": [],
+    "scrollWidth": 768
+  }
+]

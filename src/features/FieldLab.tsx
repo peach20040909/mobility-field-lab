@@ -55,7 +55,7 @@ const nav = [
   { id: "review", label: "사진 판정 · 검수", icon: ScanLine },
   { id: "analysis", label: "분석 대시보드", icon: ChartNoAxesCombined },
   { id: "map", label: "조사 지도", icon: Map },
-  { id: "guide", label: "조사 방법 · 면접", icon: BookOpen },
+  { id: "guide", label: "조사 방법", icon: BookOpen },
 ] as const;
 type Page = (typeof nav)[number]["id"];
 const number = (n: number) =>
@@ -135,6 +135,8 @@ export default function FieldLab() {
     setPage(p);
     setMenu(false);
     setReviewId(undefined);
+    setToast("");
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   };
   const action = async (fn: () => Promise<void>, message: string) => {
     setError("");
@@ -522,6 +524,8 @@ export default function FieldLab() {
                       <h3>{c.name}</h3>
                       <p>{c.place}</p>
                       <span className="policy">{c.policy}</span>
+                      <span className="policy-date">2026.10 확인</span>
+                      <p className="small">{c.note}</p>
                       <div className="city-bottom">
                         <MapPin size={14} />
                         {c.role}
@@ -530,7 +534,6 @@ export default function FieldLab() {
                   ))}
                 </div>
                 <p className="small muted">
-                  도시 정책은 제출자료 기준입니다. 최신 공식 원문 재확인 전이며,
                   측정 결과로 도시 순위를 매기지 않습니다.
                 </p>
               </section>
@@ -905,7 +908,10 @@ export default function FieldLab() {
                           <div className="button-group">
                             <button
                               className="secondary"
-                              onClick={() => setReviewId(o.canonicalDeviceId)}
+                              onClick={() => {
+                                setToast("");
+                                setReviewId(o.canonicalDeviceId);
+                              }}
                             >
                               검수하기
                               <ArrowUpRight size={14} />
@@ -1199,6 +1205,7 @@ export default function FieldLab() {
                     <h3>{c.name}</h3>
                     <p>{c.place}</p>
                     <span className="policy">{c.policy}</span>
+                    <span className="policy-date">2026.10 확인</span>
                     <p className="small">{c.note}</p>
                     <a
                       className="city-bottom"
@@ -1221,43 +1228,38 @@ export default function FieldLab() {
           {page === "guide" && (
             <>
               <PageTitle
-                eyebrow="METHOD & INTERVIEW"
+                eyebrow="FIELD METHOD"
                 title="우리가 지키는 관찰의 기준."
-                desc="무엇을 만들었고, 무엇을 아직 검증하지 않았는지 함께 설명합니다."
+                desc="현장 측정부터 독립 판정, 검증과 결과 해석까지 같은 기준을 적용합니다."
               />
               {[
                 {
-                  title: "01 · 면접 3분 시연",
-                  content:
-                    "연구 질문(30초) → 예시와 실제 자료 구분(20초) → 사진 등록과 두 사람의 독립 판정(70초) → 지표·지도·CSV 확인(40초) → 한계와 현장 계획(20초).",
-                },
-                {
-                  title: "02 · 현장 측정",
+                  title: "01 · 현장 측정",
                   content:
                     "관리형 도시는 주차구역 근처·먼 곳 각각 200m. 주차구역이 없는 도시는 400m 한 구간. 같은 날 11–15시에 연속 측정하고 시각·날씨를 남깁니다. 기기가 없는 구간도 빠짐없이 기록합니다.",
                 },
                 {
-                  title: "03 · 개인과 공유를 구분",
+                  title: "02 · 개인과 공유를 구분",
                   content:
                     "공유 킥보드와 공유 전기자전거를 집계합니다. 로고·QR 등 근거가 부족하면 불명으로 기록합니다. 개인과 불명 기기는 지표에서 제외합니다. 같은 기기의 반복 사진은 대표 기기로 연결합니다.",
                 },
                 {
-                  title: "04 · 세 단계 판정",
+                  title: "03 · 세 단계 판정",
                   content:
                     "○ 정상: 가장자리 일렬·지정 주차구역 안. △ 통행 방해: 보도 가운데 막음·쓰러짐. × 위험: 점자블록·횡단보도·역 출구·정류소·차도. 사진만으로 보도 폭을 미터로 추정하거나 현지 법 위반을 단정하지 않습니다.",
                 },
                 {
-                  title: "05 · 원판정과 검증",
+                  title: "04 · 원판정과 검증",
                   content:
                     "두 사람이 따로 판정한 원래 기록을 보존하고, 불일치는 최종 조정 사유와 함께 저장합니다. 로컬 역할 시연은 보안상 분리된 계정이 아닙니다. 실제 AI 정확도는 독립 라벨 사진과 비교한 뒤 보고합니다.",
                 },
                 {
-                  title: "06 · 지금의 구현 상태",
+                  title: "05 · 지금의 구현 상태",
                   content:
                     "조사 등록·사진 저장·판정·역할별 검수·지표·지도·백업·CSV가 구현되어 있습니다. 공개 모델은 이 PC의 로컬 AI 서버로 연결하며 실험 단계입니다. 팀 계정 공동 저장, 자동 가림 처리, 견인 원자료 분석은 미연결입니다. 사진은 이 브라우저와 사용자가 실행한 로컬 AI 서버에서 처리합니다.",
                 },
                 {
-                  title: "07 · 결과 해석과 공개",
+                  title: "06 · 결과 해석과 공개",
                   content:
                     "도시 비교는 거리 모습에 대한 기술 통계입니다. 정책의 인과 효과나 도시 순위를 주장하지 않습니다. 공개할 사진은 얼굴·번호판 가림과 사람 확인을 마친 뒤 사용합니다. 실제 조사 기록은 브라우저 삭제 전에 백업하세요.",
                 },
@@ -1281,6 +1283,14 @@ export default function FieldLab() {
         <ReviewPanel
           observation={selected}
           photo={data.photos.find((p) => p.id === selected.photoId)}
+          source={
+            data.sessions.find(
+              (s) =>
+                s.id ===
+                data.segments.find((g) => g.id === selected.segmentId)
+                  ?.sessionId,
+            )?.source ?? "field"
+          }
           repo={repo}
           onDone={async () => {
             await refresh();

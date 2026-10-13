@@ -6,12 +6,14 @@ import type { LocalRepository } from "@/storage/indexeddb";
 export default function ReviewPanel({
   observation,
   photo,
+  source,
   repo,
   onDone,
   onClose,
 }: {
   observation: Observation;
   photo?: Photo;
+  source: "demo" | "field";
   repo: LocalRepository;
   onDone: () => Promise<void>;
   onClose: () => void;
@@ -50,6 +52,11 @@ export default function ReviewPanel({
           로컬 역할 시연입니다. 실제 독립 검수는 서로 다른 계정의 서버 연결이
           필요합니다.
         </p>
+        {source === "demo" && (
+          <p className="demo-notice">
+            예시 데이터 · 합성 사진과 판정이며 실제 측정 결과가 아닙니다
+          </p>
+        )}
         <div className="review-grid">
           <div>
             <div className="bbox-frame">

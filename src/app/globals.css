@@ -573,6 +573,15 @@ main {
   padding: 3px 7px;
   color: #7d8c6f;
 }
+.policy-date {
+  display: inline-block;
+  margin: 6px 0 6px 6px;
+  font-size: 10px;
+  color: var(--green);
+}
+.city-card .policy {
+  overflow-wrap: anywhere;
+}
 .city-bottom {
   border-top: 1px solid var(--line);
   padding-top: 13px;
