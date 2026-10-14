@@ -17,26 +17,15 @@ test("a wheel burst is moderated instead of jumping several map levels", async (
   ).toBeVisible();
   await page.getByRole("button", { name: "조사 지도", exact: true }).click();
   const map = page.getByRole("img", { name: "조사 위치 지도" });
-  await expect(map.locator(".leaflet-tile").first()).toBeAttached();
-  const tileLevel = () =>
-    map
-      .locator(".leaflet-tile")
-      .evaluateAll((images) =>
-        Math.max(
-          ...images.map((img) =>
-            Number(
-              (img as HTMLImageElement).src.match(/\.org\/(\d+)\//)?.[1] ?? 0,
-            ),
-          ),
-        ),
-      );
-  const before = await tileLevel();
+  const zoom = page.getByLabel("지도 확대 단계");
+  await expect(zoom).toHaveText("14.0");
+  const before = Number(await zoom.textContent());
   await map.scrollIntoViewIfNeeded();
   const box = (await map.boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.wheel(0, -480);
   await page.waitForTimeout(700);
-  const after = await tileLevel();
+  const after = Number(await zoom.textContent());
   expect(after).toBeGreaterThan(before);
   expect(after - before).toBeLessThanOrEqual(2);
 });
