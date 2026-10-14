@@ -7,7 +7,8 @@
   color: #254936;
   line-height: 1.6;
 }
-.heading {
+.heading,
+.reportTitle {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -27,41 +28,199 @@
   font-size: 13px;
   font-weight: 700;
 }
-.heading > a {
+.heading button,
+.dialog button {
   border: 1px solid #6b8b76;
   border-radius: 8px;
   padding: 11px 16px;
-  text-decoration: none;
-  white-space: nowrap;
+  background: white;
   color: #264a35;
   font-size: 15px;
   font-weight: 700;
+  cursor: pointer;
 }
 .card > p {
   font-size: 17px;
-  margin: 12px 0 18px;
+  margin: 12px 0 24px;
 }
-.imageLink {
+.report {
+  padding: 24px;
+  border: 1px solid #dce2d8;
+  border-radius: 10px;
+  background: white;
+  color: #2b4437;
+}
+.reportTitle {
+  align-items: start;
+  margin-bottom: 22px;
+}
+.reportTitle span {
+  font-size: 12px;
+  color: #566658;
+  letter-spacing: 1px;
+}
+.reportTitle h3 {
+  font-size: 29px;
+  line-height: 1.3;
+  margin: 8px 0;
+}
+.reportTitle strong {
+  background: #f5efdc;
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.equation {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 22px;
+}
+.equation > div {
+  border: 1px solid #d8ded4;
+  padding: 14px 18px;
+  border-radius: 10px;
+}
+.equation > div:last-child {
+  border: 2px solid #365a49;
+  background: #eff3ec;
+}
+.equation span,
+.equation small,
+.equation b {
   display: block;
-  border: 1px solid #e0e6dc;
-  border-radius: 8px;
+}
+.equation span,
+.equation small {
+  font-size: 13px;
+  color: #526155;
+}
+.equation b {
+  font-size: 20px;
+  margin: 3px 0;
+}
+.equation em {
+  font-size: 24px;
+  font-style: normal;
+}
+.layout {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+.mapFrame {
+  border: 1px solid #d8ded4;
+  border-radius: 12px;
   overflow: hidden;
 }
-.imageLink img {
+.map {
   display: block;
   width: 100%;
   height: auto;
 }
-.card .caption {
-  font-size: 13px;
-  color: #536958;
-  margin: 12px 0 0;
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 12px;
+  font-size: 12px;
+  color: #475d4f;
 }
-.card a:focus-visible {
+.candidates article {
+  border: 1px solid #d8ded4;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.candidates article:first-child {
+  border: 2px solid #365a49;
+}
+.candidates h4 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  margin: 0 0 10px;
+}
+.candidates h4 > span {
+  background: #365a49;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 8px;
+}
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tags span {
+  background: #f4edd8;
+  color: #665319;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+.tags span:last-child {
+  background: #f5e7e0;
+  color: #843e2d;
+}
+.candidates p {
+  font-size: 14px;
+  margin: 10px 0 0;
+  line-height: 1.7;
+}
+.candidates .note {
+  border-top: 1px solid #d8ded4;
+  padding-top: 12px;
+}
+.report .caption {
+  font-size: 12px;
+  color: #536958;
+  margin: 18px 0 0;
+}
+.dialog {
+  width: calc(100% - 40px);
+  max-width: 1600px;
+  max-height: calc(100dvh - 40px);
+  padding: 20px;
+  border: 0;
+  border-radius: 14px;
+  color: #254936;
+}
+.dialog::backdrop {
+  background: #132b23b3;
+  backdrop-filter: blur(4px);
+}
+.dialogHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.card button:focus-visible,
+.dialog button:focus-visible {
   outline: 3px solid #c88d25;
   outline-offset: 3px;
 }
-@media (max-width: 800px) {
+@media (max-width: 1000px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  .reportTitle {
+    flex-direction: column;
+  }
+  .equation b {
+    font-size: 17px;
+  }
+}
+@media (max-width: 600px) {
+  .card {
+    padding: 16px;
+  }
   .heading {
     align-items: start;
     flex-direction: column;
@@ -69,8 +228,23 @@
   .heading h2 {
     font-size: 23px;
   }
-  .card {
-    padding: 18px;
+  .report {
+    padding: 14px;
+  }
+  .reportTitle h3 {
+    font-size: 24px;
+  }
+  .equation {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .equation em {
+    text-align: center;
+  }
+  .dialog {
+    width: calc(100% - 16px);
+    max-height: calc(100dvh - 16px);
+    padding: 12px;
   }
   .card > p {
     font-size: 15px;

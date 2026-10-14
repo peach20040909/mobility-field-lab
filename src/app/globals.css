@@ -1552,3 +1552,6 @@ fieldset {
   .prepared-review .verdicts, .prepared-review .verdicts p { font-size: 12px; }
   .prepared-review .review-image { max-height: 320px; }
 }
+
+.map-view-controls { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; color: #45614e; font-size: 12px; }
+.map-view-controls .secondary { padding: 7px 10px; font-size: 12px; }
