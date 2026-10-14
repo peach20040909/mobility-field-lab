@@ -95,7 +95,7 @@ export default function FieldLab() {
   };
   useEffect(() => {
     const boot = async () => {
-      if (window.location.hash === "#hongdae") {
+      if (["#hongdae", "#campus"].includes(window.location.hash)) {
         await repo.loadHongdaeDemo();
         setDemoFocus(HONGDAE_DEMO_ID);
         setSource("demo");

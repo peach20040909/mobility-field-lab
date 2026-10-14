@@ -7,6 +7,7 @@ import {
 } from "@/data/hongdae";
 import { statusLabels, type Observation } from "@/domain/schema";
 import styles from "./HongdaePrepared.module.css";
+import CampusCase from "./CampusCase";
 
 export default function HongdaePrepared({
   observations,
@@ -29,6 +30,15 @@ export default function HongdaePrepared({
           <p>사진 25장 · 대표 사진 2장 · 사전 판정 항목 6건</p>
         </div>
         <div className={styles.actions}>
+          <button
+            onClick={() =>
+              document
+                .getElementById("campus-case")
+                ?.scrollIntoView({ behavior: "instant", block: "start" })
+            }
+          >
+            명지대 앞 사례 보기
+          </button>
           <button onClick={() => onReview(HONGDAE_DEMO_ID + "-03")}>
             불일치 조정 시연
           </button>
@@ -160,6 +170,7 @@ export default function HongdaePrepared({
         · 모델 버전과 분석 시각은 자료에 없습니다. 법적 위반·실제 보도
         폭·정확도를 확정하는 결과가 아닙니다.
       </p>
+      <CampusCase />
       <details className={styles.galleryDetails}>
         <summary>사전조사 사진 전체 25장 · 메모 보기</summary>
         <div className={styles.gallery} aria-label="홍대 사전조사 사진 모음">
