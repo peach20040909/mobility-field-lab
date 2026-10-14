@@ -28,6 +28,7 @@ import { computeAgreement, getReviewStatus } from "@/domain/agreement";
 import { REVIEW_DEMO_ID } from "@/data/demo";
 import { HONGDAE_DEMO_ID } from "@/data/hongdae";
 import HongdaePrepared from "./review/HongdaePrepared";
+import ProposalPreview from "./analysis/ProposalPreview";
 import { toCsv } from "@/domain/export";
 import { analyzePhoto, LOCAL_VISION_URL } from "@/ai/provider";
 import { cities } from "@/data/cities";
@@ -95,11 +96,11 @@ export default function FieldLab() {
   };
   useEffect(() => {
     const boot = async () => {
-      if (["#hongdae", "#campus"].includes(window.location.hash)) {
+      if (["#hongdae", "#campus", "#proposal"].includes(window.location.hash)) {
         await repo.loadHongdaeDemo();
         setDemoFocus(HONGDAE_DEMO_ID);
         setSource("demo");
-        setPage("review");
+        setPage(window.location.hash === "#proposal" ? "analysis" : "review");
       }
       setData(await repo.exportProject());
     };
@@ -1177,6 +1178,7 @@ export default function FieldLab() {
               />
               {sourceControl}
               {sourceNotice}
+              <ProposalPreview />
               <div className="metric-grid">
                 <Metric
                   label="100m당 공유 기기"
