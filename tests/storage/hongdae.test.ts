@@ -10,7 +10,7 @@ test("prepared Hongdae seed keeps human changes and survives JSON backup restore
   await repo.loadHongdaeDemo();
   const p = await repo.exportProject();
   expect(p.photos.length).toBe(25);
-  expect(p.observations.length).toBe(6);
+  expect(p.observations.length).toBe(4);
   expect(p.sessions[0].source).toBe("demo");
   const original = p.observations.find(
     (o) => o.id === HONGDAE_DEMO_ID + "-03",

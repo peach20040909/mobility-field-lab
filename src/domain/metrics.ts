@@ -13,7 +13,7 @@ export function computeMetrics(
     if (o.id === o.canonicalDeviceId) unique.set(key, o);
   }
   const candidates = [...unique.values()].filter(
-    (o) => o.countMode !== "group",
+    (o) => o.countMode !== "group" || o.estimatedCount !== undefined,
   );
   const rows = candidates.filter(
     (o) => o.final && ["shared-scooter", "shared-ebike"].includes(o.final.kind),
@@ -24,20 +24,26 @@ export function computeMetrics(
   const bad = judged.filter(
     (o) => o.final!.status === "obstruction" || o.final!.status === "danger",
   );
+  const weight = (o: Observation) =>
+    o.countMode === "group" ? (o.estimatedCount ?? 0) : 1;
+  const count = (items: Observation[]) =>
+    items.reduce((sum, o) => sum + weight(o), 0);
   const risks: Record<string, number> = {};
   for (const o of judged)
-    for (const r of new Set(o.final!.risks)) risks[r] = (risks[r] ?? 0) + 1;
+    for (const r of new Set(o.final!.risks))
+      risks[r] = (risks[r] ?? 0) + weight(o);
   const distance = segments.reduce((n, s) => n + s.lengthM, 0);
   return {
-    total: rows.length,
+    total: count(rows),
     distance,
-    density: distance ? (rows.length / distance) * 100 : 0,
-    ratio: judged.length ? bad.length / judged.length : null,
-    judged: judged.length,
-    bad: bad.length,
-    unreviewed: candidates.filter((o) => !o.final).length,
-    unassessable: rows.filter((o) => o.final?.status === "unassessable").length,
+    density: distance ? (count(rows) / distance) * 100 : 0,
+    ratio: count(judged) ? count(bad) / count(judged) : null,
+    judged: count(judged),
+    bad: count(bad),
+    unreviewed: count(candidates.filter((o) => !o.final)),
+    unassessable: count(rows.filter((o) => o.final?.status === "unassessable")),
     risks,
-    fallen: judged.filter((o) => o.final!.fallen).length,
+    fallen: count(judged.filter((o) => o.final!.fallen)),
+    estimated: count(rows.filter((o) => o.countMode === "group")),
   };
 }

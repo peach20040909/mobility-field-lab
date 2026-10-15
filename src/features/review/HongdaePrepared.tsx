@@ -27,7 +27,10 @@ export default function HongdaePrepared({
         <div>
           <span className={styles.eyebrow}>홍대 · 2026.9.28 · 저장된 결과</span>
           <h2>홍대 사진으로 준비한 사전 분석</h2>
-          <p>사진 25장 · 대표 사진 2장 · 사전 판정 항목 6건</p>
+          <p>
+            사진 25장 · 대표 사진 2장 · 사전 판정 사례 4건 · 개별 3대 + 묶음 약
+            5대
+          </p>
         </div>
         <div className={styles.actions}>
           <button
@@ -47,7 +50,7 @@ export default function HongdaePrepared({
         </div>
       </div>
       <p className={styles.caption}>
-        실제 홍대 사진에 자료의 표시 영역을 옮겼습니다. A/B와 최종 판정은 흐름
+        실제 홍대 사진에 팀이 검토한 사례를 표시했습니다. A/B와 최종 판정은 흐름
         설명용 예시이며, 실제 두 사람의 조사 판정이 아닙니다. 나머지 사진은 사전
         검토 메모와 함께 보관합니다.
       </p>
@@ -88,7 +91,7 @@ export default function HongdaePrepared({
                 <span>
                   {i === 0
                     ? "사진 속 기기 2대"
-                    : "사진 속 기기 5대 이상 · 겹침 포함"}
+                    : "개별 1대 + 묶음 약 5대 추정 · 중복 제외"}
                 </span>
               </figcaption>
             </figure>
@@ -97,22 +100,22 @@ export default function HongdaePrepared({
       </div>
       <div className={styles.summaries}>
         <div>
-          <b>2</b>
-          <span>정상 · 사전 판정 항목</span>
+          <b>○ 정상</b>
+          <span>01 · 가장자리의 흰색 기기</span>
         </div>
         <div>
-          <b>2</b>
-          <span>위험 · 묶음 1건 포함</span>
+          <b>△ 통행 방해</b>
+          <span>02 · 기둥 사이 / 04 · 묶음 약 5대</span>
         </div>
         <div>
-          <b>2</b>
-          <span>판정 보류 · 사람 확인</span>
+          <b>× 위험</b>
+          <span>03 · 역 출구·점자블록 접근 경로</span>
         </div>
       </div>
       <p className={styles.caption}>
-        위험 항목에는 노란 자전거 2대 이상을 묶은 05번이 포함됩니다. 6건은 기기
-        대수가 아닌 판정 항목 수입니다. 묶음은 정확한 대수 확인 전까지
-        대시보드의 대수·비율에서 제외합니다.
+        전체 약 8대 추정(01~03 각 1대 + 04 묶음 약 5대)입니다. 04는 개별 기기별
+        판정 없이 묶음으로 관찰합니다. 대시보드는 최종 검수된 사례만 집계하고,
+        묶음 대수가 포함되면 추정 통계로 표시합니다.
       </p>
       <div className={styles.tableWrap}>
         <table aria-label="홍대 사전 판정 결과">
@@ -146,7 +149,7 @@ export default function HongdaePrepared({
                     <button
                       onClick={() => onReview(HONGDAE_DEMO_ID + "-" + c.key)}
                     >
-                      {c.key} 독립 판정 보기
+                      {c.key} {c.group ? "묶음 판정 보기" : "독립 판정 보기"}
                     </button>
                     <small>
                       {c.key === "03"
@@ -167,8 +170,8 @@ export default function HongdaePrepared({
         <a href={HONGDAE_ARTIFACT_URL} target="_blank" rel="noreferrer">
           팀 제공 사전 분석 자료
         </a>{" "}
-        · 모델 버전과 분석 시각은 자료에 없습니다. 법적 위반·실제 보도
-        폭·정확도를 확정하는 결과가 아닙니다.
+        · 팀 검토로 수정한 사전 판정 예시입니다. 법적 위반·실제 보도 폭·정확도를
+        확정하는 결과가 아닙니다.
       </p>
       <CampusCase />
       <details className={styles.galleryDetails}>

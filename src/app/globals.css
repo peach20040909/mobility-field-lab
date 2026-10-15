@@ -1540,18 +1540,63 @@ fieldset {
 }
 
 /* Larger text for the prepared Hongdae photo review. */
-.modal.wide.prepared-review { width: 1200px; color: #234332; }
-.prepared-review .notice, .prepared-review .demo-notice, .prepared-review .small,
-.prepared-review .verdicts, .prepared-review .verdicts p { font-size: 14px; color: #405b49; }
-.prepared-review .verdicts > div { background: #fff; }
-.prepared-review label, .prepared-review input, .prepared-review select,
-.prepared-review textarea, .prepared-review button { font-size: 15px; }
-.prepared-review .review-image { max-height: 420px; }
+.modal.wide.prepared-review {
+  width: 1200px;
+  color: #234332;
+}
+.prepared-review .notice,
+.prepared-review .demo-notice,
+.prepared-review .small,
+.prepared-review .verdicts,
+.prepared-review .verdicts p {
+  font-size: 14px;
+  color: #405b49;
+}
+.prepared-review .verdicts > div {
+  background: #fff;
+}
+.prepared-review label,
+.prepared-review input,
+.prepared-review select,
+.prepared-review textarea,
+.prepared-review button {
+  font-size: 15px;
+}
+.prepared-review .review-image {
+  max-height: 420px;
+}
 @media (max-width: 650px) {
-  .prepared-review .notice, .prepared-review .demo-notice, .prepared-review .small,
-  .prepared-review .verdicts, .prepared-review .verdicts p { font-size: 12px; }
-  .prepared-review .review-image { max-height: 320px; }
+  .prepared-review .notice,
+  .prepared-review .demo-notice,
+  .prepared-review .small,
+  .prepared-review .verdicts,
+  .prepared-review .verdicts p {
+    font-size: 12px;
+  }
+  .prepared-review .review-image {
+    max-height: 320px;
+  }
 }
 
-.map-view-controls { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; color: #45614e; font-size: 12px; }
-.map-view-controls .secondary { padding: 7px 10px; font-size: 12px; }
+.map-view-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  color: #45614e;
+  font-size: 12px;
+}
+.map-view-controls .secondary {
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
+.metric-grid.metric-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 800px) {
+  .metric-grid.metric-three {
+    grid-template-columns: 1fr;
+  }
+}

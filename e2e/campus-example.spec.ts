@@ -37,6 +37,8 @@ test("campus bus stop case presents both user photos and separates observation f
   }
   expect(await card.innerText()).not.toMatch(/면접|재확인|확인하지 않았/);
   await page.getByRole("button", { name: "숫자 보기 →", exact: true }).click();
-  await expect(page.getByText("2대 / 200m", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("7대 / 200m · 묶음 5대 추정 포함", { exact: true }),
+  ).toBeVisible();
   expect(modelRequests).toBe(0);
 });

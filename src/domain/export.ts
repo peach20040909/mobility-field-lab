@@ -30,6 +30,7 @@ export function toCsv(p: ProjectExport) {
     "prepared_source",
     "prepared_note",
     "photo_name",
+    "estimated_count",
   ];
   const rows = p.observations.map((o) => {
     const segment = p.segments.find((s) => s.id === o.segmentId);
@@ -60,6 +61,7 @@ export function toCsv(p: ProjectExport) {
       photo?.preparedSource,
       photo?.preparedNote,
       photo?.name,
+      o.estimatedCount,
     ]
       .map(cell)
       .join(",");
@@ -117,6 +119,7 @@ export function toCsv(p: ProjectExport) {
         "",
         "",
       ]
+        .concat("")
         .map(cell)
         .join(","),
     );

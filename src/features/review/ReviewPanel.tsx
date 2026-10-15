@@ -152,7 +152,11 @@ export default function ReviewPanel({
               <p className="notice">
                 {photo.preparedSource.replace(/^Claude 자료의/, "팀 자료의")}
                 {observation.countMode === "group" &&
-                  " · 여러 기기의 묶음: 대수·비율 집계 제외"}
+                  (observation.estimatedCount
+                    ? " · 묶음 약 " +
+                      observation.estimatedCount +
+                      "대 추정: 개별 판정 없이 추정 통계에 포함"
+                    : " · 여러 기기의 묶음: 대수·비율 집계 제외")}
               </p>
             )}
             <p className="small muted">

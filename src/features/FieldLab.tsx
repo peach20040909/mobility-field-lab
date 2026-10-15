@@ -34,6 +34,7 @@ import { analyzePhoto, LOCAL_VISION_URL } from "@/ai/provider";
 import { cities } from "@/data/cities";
 import {
   kindLabels,
+  riskLabels,
   statusLabels,
   type ProjectExport,
   type Observation,
@@ -123,7 +124,8 @@ export default function FieldLab() {
           (source !== "demo" ||
             (demoFocus
               ? s.id === demoFocus
-              : ![REVIEW_DEMO_ID, HONGDAE_DEMO_ID].includes(s.id))),
+              : ![REVIEW_DEMO_ID, HONGDAE_DEMO_ID].includes(s.id) &&
+                !s.id.startsWith("demo-hongdae-prepared-"))),
       ),
     [data, source, demoFocus],
   );
@@ -231,7 +233,7 @@ export default function FieldLab() {
           : "합성 예시 데이터 · 실제 조사 결과가 아닙니다"}
         {demoFocus === REVIEW_DEMO_ID && " · 30초 독립 판정 예시"}
         {hongdaeMode &&
-          " · 거리 200m와 지도 위치는 시연 설정입니다. 대표 2장만 집계하며 반복 사진·기기 묶음은 대수에서 제외합니다."}
+          " · 거리 200m와 지도 위치는 시연 설정입니다. 대표 2장만 집계하며 반복 사진은 제외합니다. 04 묶음은 약 5대로 추정하며, 포함된 대수·비율·위험 유형별 대수도 추정값입니다."}
       </p>
     ) : (
       <p className="small muted">이 브라우저의 실제 기록 · 서버 공유 미연결</p>
@@ -1178,45 +1180,67 @@ export default function FieldLab() {
               />
               {sourceControl}
               {sourceNotice}
-              <ProposalPreview />
-              <div className="metric-grid">
+              <div
+                className="metric-grid metric-three"
+                aria-label="분석 핵심 결과 세 숫자"
+              >
                 <Metric
-                  label="100m당 공유 기기"
-                  value={number(metrics.density)}
+                  label={
+                    metrics.estimated
+                      ? "100m당 공유 기기 · 추정"
+                      : "100m당 공유 기기"
+                  }
+                  value={
+                    (metrics.estimated ? "약 " : "") + number(metrics.density)
+                  }
                   unit="대"
-                  foot={metrics.total + "대 / " + metrics.distance + "m"}
+                  foot={
+                    metrics.total +
+                    "대 / " +
+                    metrics.distance +
+                    "m" +
+                    (metrics.estimated
+                      ? " · 묶음 " + metrics.estimated + "대 추정 포함"
+                      : "")
+                  }
                 />
                 <Metric
-                  label="통행 방해 · 위험 비율"
-                  value={percent(metrics.ratio)}
+                  label={
+                    metrics.estimated
+                      ? "통행 방해 · 위험 비율 · 추정"
+                      : "통행 방해 · 위험 비율"
+                  }
+                  value={
+                    (metrics.estimated ? "약 " : "") + percent(metrics.ratio)
+                  }
                   foot={metrics.bad + "대 / 판정 완료 " + metrics.judged + "대"}
                 />
                 <Metric
-                  label="확정 판정 표본"
-                  value={String(metrics.judged)}
-                  unit="대"
+                  label="위험 유형"
+                  value={String(Object.keys(metrics.risks).length)}
+                  unit="종류"
                   foot={
-                    "미검수 " +
-                    metrics.unreviewed +
-                    " · 판정 불가 " +
-                    metrics.unassessable
-                  }
-                />
-                <Metric
-                  label="사람 간 일치율"
-                  value={percent(agreement.rate)}
-                  foot={
-                    "일치 " +
-                    agreement.matched +
-                    " · 불일치 " +
-                    (agreement.total - agreement.matched) +
-                    " · 비교 " +
-                    agreement.total +
-                    "쌍 · 제외 " +
-                    agreement.excluded
+                    Object.keys(metrics.risks)
+                      .map((k) => riskLabels[k as keyof typeof riskLabels])
+                      .join(" · ") || "확정된 위험 유형 없음"
                   }
                 />
               </div>
+              <ProposalPreview />
+              <section className="panel" aria-label="검수 진행 현황">
+                <h2>검수 진행 현황</h2>
+                <p>
+                  확정 판정 표본 {metrics.judged}대
+                  {metrics.estimated ? " · 묶음 추정 포함" : ""} · 미검수{" "}
+                  {metrics.unreviewed}대 · 판정 불가 {metrics.unassessable}대
+                </p>
+                <p>
+                  사람 간 일치율 {percent(agreement.rate)} · 일치{" "}
+                  {agreement.matched} · 불일치{" "}
+                  {agreement.total - agreement.matched} · 비교 {agreement.total}
+                  쌍 · 제외 {agreement.excluded}
+                </p>
+              </section>
               <section className="panel">
                 <div className="section-heading">
                   <h2>
@@ -1262,10 +1286,16 @@ export default function FieldLab() {
                                 }[s.relation]
                               }
                             </td>
-                            <td>{number(m.density)}대</td>
+                            <td>
+                              {m.estimated ? "약 " : ""}
+                              {number(m.density)}대
+                            </td>
                             <td>
                               <div className="bar-cell">
-                                <span>{percent(m.ratio)}</span>
+                                <span>
+                                  {m.estimated ? "약 " : ""}
+                                  {percent(m.ratio)}
+                                </span>
                                 <div>
                                   <i
                                     style={{

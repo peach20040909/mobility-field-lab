@@ -43,7 +43,9 @@ for (const width of [390, 768, 1440])
     await page
       .getByRole("button", { name: "숫자 보기 →", exact: true })
       .click();
-    await expect(page.getByText("2대 / 200m", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText("7대 / 200m · 묶음 5대 추정 포함", { exact: true }),
+    ).toBeVisible();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth),
     ).toBeLessThanOrEqual(width);
@@ -83,7 +85,17 @@ test("Hongdae saved results work without a model and final review updates scoped
   ).toHaveCount(25);
   await expect(
     page.getByLabel("홍대 사전 판정 결과").locator("tbody tr"),
-  ).toHaveCount(6);
+  ).toHaveCount(4);
+  const table = page.getByLabel("홍대 사전 판정 결과");
+  await expect(
+    table.getByRole("row").filter({ hasText: "02 ·" }),
+  ).toContainText("기둥 사이 보행로에 놓여 보행 동선을 막음");
+  await expect(
+    table.getByRole("row").filter({ hasText: "04 ·" }),
+  ).toContainText("약 5대");
+  await expect(table).not.toContainText("05 ·");
+  await expect(table).not.toContainText("06 ·");
+
   await expect(page.getByLabel("로컬 AI 연결 토큰")).not.toBeVisible();
   await page
     .getByRole("button", { name: "03 독립 판정 보기", exact: true })
@@ -104,16 +116,18 @@ test("Hongdae saved results work without a model and final review updates scoped
   await page
     .getByRole("button", { name: "분석 대시보드", exact: true })
     .click();
-  await expect(page.getByText("3대 / 200m", { exact: true })).toBeVisible();
   await expect(
-    page.getByText("1대 / 판정 완료 3대", { exact: true }),
+    page.getByText("8대 / 200m · 묶음 5대 추정 포함", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("7대 / 판정 완료 8대", { exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "조사 지도", exact: true }).click();
   await page
     .getByRole("button", { name: "홍대 사전조사 시연 판정 집계", exact: true })
     .click();
   await expect(
-    page.getByText(/확정 공유 3대.*100m당 1.5대.*33.3%/),
+    page.getByText(/추정 포함 공유 약 8대.*100m당 약 4대.*87.5%/),
   ).toBeVisible();
   await page.reload();
   await page

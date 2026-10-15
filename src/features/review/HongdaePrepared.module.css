@@ -135,8 +135,8 @@
   color: #a7422c;
 }
 .summaries div:nth-child(3) {
-  background: #efedf7;
-  color: #625080;
+  background: #fcece6;
+  color: #a32e23;
 }
 .summaries b {
   display: block;
@@ -271,4 +271,11 @@
   .tableWrap {
     max-width: 100%;
   }
+}
+
+.obstruction {
+  color: #a76114;
+}
+.summaries b {
+  font-size: 25px;
 }

@@ -89,11 +89,11 @@ export default function ResearchMap({
                 : "실제 조사") +
             " · " +
             s.lengthM +
-            "m · 확정 공유 " +
+            (m.estimated ? "m · 추정 포함 공유 약 " : "m · 확정 공유 ") +
             m.total +
-            "대 · 100m당 " +
+            (m.estimated ? "대 · 100m당 약 " : "대 · 100m당 ") +
             fmt(m.density) +
-            "대 · 방해·위험 " +
+            (m.estimated ? "대 · 방해·위험 약 " : "대 · 방해·위험 ") +
             (m.ratio === null ? "산출 불가" : fmt(m.ratio * 100) + "%") +
             " · 미확정 " +
             m.unreviewed +

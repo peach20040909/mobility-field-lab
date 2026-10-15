@@ -91,6 +91,7 @@ export const observationSchema = z.object({
   kind: kindSchema,
   bbox: bboxSchema.optional(),
   countMode: z.enum(["device", "group"]).optional(),
+  estimatedCount: z.number().int().min(1).max(100).optional(),
   judgments: z.object({
     A: judgmentSchema.optional(),
     B: judgmentSchema.optional(),

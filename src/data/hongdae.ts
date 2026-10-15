@@ -1,6 +1,6 @@
 import type { Judgment, ProjectExport } from "../domain/schema";
 
-export const HONGDAE_DEMO_ID = "demo-hongdae-prepared-v1";
+export const HONGDAE_DEMO_ID = "demo-hongdae-prepared-v2";
 export const HONGDAE_ARTIFACT_URL =
   "https://claude.ai/artifact/FfrGvsceXDUMGp6PRXgvtd";
 export const hongdaePhotos = [
@@ -54,7 +54,7 @@ export const hongdaePhotos = [
   ],
   [
     "레드로드 안 · SWING과 카카오T",
-    "Claude 자료의 대표 사진 A입니다. 기둥·화분 쪽의 두 자전거를 정상으로 분류한 사전 판정 예시입니다.",
+    "Claude 자료의 대표 사진 A입니다. 흰색 기기는 정상, 노란 기기는 기둥 사이 보행로의 통행 방해로 정리한 사전 판정 예시입니다.",
   ],
   [
     "교차 지점의 기기",
@@ -118,6 +118,7 @@ export const hongdaeCases: {
   judgment: Judgment;
   bbox: [number, number, number, number];
   group?: boolean;
+  estimatedCount?: number;
 }[] = [
   {
     key: "01",
@@ -139,10 +140,10 @@ export const hongdaeCases: {
     title: "노란 카카오T 공유 전기자전거",
     judgment: {
       kind: "shared-ebike",
-      status: "normal",
+      status: "obstruction",
       risks: [],
       fallen: false,
-      reason: "기둥 쪽에 정렬되어 통행을 방해하지 않는 것으로 판정한 예시",
+      reason: "기둥 사이 보행로에 놓여 보행 동선을 막음",
     },
     bbox: [0.58, 0.46, 0.89, 0.79],
   },
@@ -163,43 +164,18 @@ export const hongdaeCases: {
   {
     key: "04",
     photoIndex: 0,
-    title: "보라색 beam · 기기 형태 보류",
-    judgment: {
-      kind: "unknown",
-      status: "unassessable",
-      risks: [],
-      fallen: false,
-      reason: "기기 형태와 바닥 위치가 다른 기기에 가려져 판정 보류",
-    },
-    bbox: [0.45, 0.44, 0.64, 0.71],
-  },
-  {
-    key: "05",
-    photoIndex: 0,
-    title: "노란 자전거 2대 이상 · 묶음",
+    title: "출구 앞 기기 묶음 · 약 5대 추정",
     judgment: {
       kind: "shared-ebike",
-      status: "danger",
+      status: "obstruction",
       risks: ["exit"],
-      fallen: false,
+      fallen: true,
       reason:
-        "출구 앞에 겹쳐 놓인 자전거 묶음. 정확한 대수는 추가 각도로 확인 필요",
+        "길가에 여러 대가 쓰러져 있어 인파가 몰리면 통행 방해가 될 것으로 예상. 개별 기기가 아닌 묶음 관찰이며 약 5대로 추정",
     },
-    bbox: [0.47, 0.625, 0.82, 0.795],
+    bbox: [0.45, 0.44, 1, 0.94],
     group: true,
-  },
-  {
-    key: "06",
-    photoIndex: 0,
-    title: "파란 프레임 자전거 · 공유 여부 보류",
-    judgment: {
-      kind: "unknown",
-      status: "unassessable",
-      risks: [],
-      fallen: false,
-      reason: "로고가 보이지 않아 개인·공유 여부를 확정할 수 없음",
-    },
-    bbox: [0.54, 0.68, 1, 0.915],
+    estimatedCount: 5,
   },
 ];
 
@@ -237,7 +213,7 @@ export function hongdaeDemoProject(): ProjectExport {
     publicationReviewed: true,
     preparedSource:
       p.index === 0 || p.index === 12
-        ? "Claude 자료의 사전 판정 · 모델 버전·분석 시각 미기재"
+        ? "팀 검토로 수정한 사전 판정 예시 · 묶음 대수 추정"
         : "사진별 사전 검토 메모 · 기기별 판정 미확정",
     preparedNote: p.note,
   }));
@@ -264,7 +240,22 @@ export function hongdaeDemoProject(): ProjectExport {
       kind: c.judgment.kind,
       bbox: c.bbox,
       countMode: c.group ? ("group" as const) : ("device" as const),
-      judgments: { A: a, B: b, AI: c.judgment },
+      estimatedCount: c.estimatedCount,
+      judgments: {
+        A: a,
+        B: b,
+        AI:
+          c.key === "04"
+            ? undefined
+            : c.key === "02"
+              ? {
+                  ...c.judgment,
+                  status: "normal" as const,
+                  reason:
+                    "원자료의 사전 판정: 기둥 쪽에 정렬되어 통행을 방해하지 않는 것으로 분류. 팀 검토에서 통행 방해로 수정",
+                }
+              : c.judgment,
+      },
       final:
         c.key === "03"
           ? undefined
