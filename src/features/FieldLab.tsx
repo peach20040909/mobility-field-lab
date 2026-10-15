@@ -96,20 +96,29 @@ export default function FieldLab() {
     setData(await repo.exportProject());
   };
   useEffect(() => {
+    let cancelled = false;
     const boot = async () => {
-      if (["#hongdae", "#campus", "#proposal"].includes(window.location.hash)) {
-        await repo.loadHongdaeDemo();
+      const hash = window.location.hash;
+      const prepared = ["#hongdae", "#campus", "#proposal"].includes(hash);
+      if (prepared) await repo.loadHongdaeDemo();
+      const project = await repo.exportProject();
+      if (cancelled) return;
+      setData(project);
+      if (prepared) {
         setDemoFocus(HONGDAE_DEMO_ID);
         setSource("demo");
-        setPage(window.location.hash === "#proposal" ? "analysis" : "review");
+        setPage(hash === "#proposal" ? "analysis" : "review");
       }
-      setData(await repo.exportProject());
     };
-    boot().catch(() =>
-      setError(
-        "브라우저 저장소에 접근할 수 없습니다. 일반 브라우저 창에서 다시 시도해 주세요.",
-      ),
-    );
+    boot().catch(() => {
+      if (!cancelled)
+        setError(
+          "브라우저 저장소에 접근할 수 없습니다. 일반 브라우저 창에서 다시 시도해 주세요.",
+        );
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [repo]);
   useEffect(() => {
     if (!toast) return;

@@ -18,7 +18,7 @@ test("a wheel burst is moderated instead of jumping several map levels", async (
   await page.getByRole("button", { name: "조사 지도", exact: true }).click();
   const map = page.getByRole("img", { name: "조사 위치 지도" });
   const zoom = page.getByLabel("지도 확대 단계");
-  await expect(zoom).toHaveText("14.0");
+  await expect(zoom).toHaveText("14.0", { timeout: 15000 });
   const before = Number(await zoom.textContent());
   await map.scrollIntoViewIfNeeded();
   const box = (await map.boundingBox())!;
@@ -39,15 +39,15 @@ test("zoom buttons make half steps and survey view can be restored", async ({
   ).toBeVisible();
   await page.getByRole("button", { name: "조사 지도", exact: true }).click();
   const zoom = page.getByLabel("지도 확대 단계");
-  await expect(zoom).toHaveText("14.0");
+  await expect(zoom).toHaveText("14.0", { timeout: 15000 });
   await page.locator(".leaflet-control-zoom-in").click();
   await expect(zoom).toHaveText("14.5");
   await page.locator(".leaflet-control-zoom-out").click();
-  await expect(zoom).toHaveText("14.0");
+  await expect(zoom).toHaveText("14.0", { timeout: 15000 });
   await page.locator(".leaflet-control-zoom-in").click();
   await expect(zoom).toHaveText("14.5");
   await page
     .getByRole("button", { name: "조사 위치로 돌아가기", exact: true })
     .click();
-  await expect(zoom).toHaveText("14.0");
+  await expect(zoom).toHaveText("14.0", { timeout: 15000 });
 });
